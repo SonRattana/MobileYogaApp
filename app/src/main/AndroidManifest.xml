@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Yogaclass"
+        tools:targetApi="31">
+
+        <!-- Đặt LoginActivity làm Activity khởi đầu -->
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+<!--        <receiver android:name=".NetworkChangeReceiver" android:enabled="true" android:exported="false">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+
+
+        <!-- Các Activity khác -->
+        <activity android:name=".MainActivity" android:exported="true"/>
+        <activity android:name=".RegisterActivity" android:exported="true" />
+        <!--        <activity android:name=".AdminActivity" android:exported="true"/>-->
+        <activity android:name=".TeacherActivity" android:exported="true"/>
+        <activity android:name=".DisplayClassesActivity" android:exported="true"/>
+        <activity android:name=".ManageInstancesActivity" android:exported="true" />
+        <activity android:name=".ViewSeasonActivity" android:exported="true"/>
+        <activity android:name=".ViewSeasonForTeacherActivity" android:exported="true"/>
+        <!--        <activity android:name=".ViewCoursesActivity" android:exported="true"/>-->
+        <!--        <activity android:name=".ViewClassInstancesActivity" android:exported="true"/>-->
+
+    </application>
+
+    <!-- Permissions for Network Access and Firebase -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>

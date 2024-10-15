@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <!-- Trường nhập tên người dùng -->
+    <EditText
+        android:id="@+id/eName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Name" />
+
+    <!-- Trường nhập email -->
+    <EditText
+        android:id="@+id/eEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/eName"
+        android:layout_marginTop="16dp"
+        android:hint="Email" />
+
+    <!-- Trường nhập mật khẩu -->
+    <EditText
+        android:id="@+id/ePassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/eEmail"
+        android:layout_marginTop="16dp"
+        android:hint="Password"
+        android:inputType="textPassword" />
+
+
+<!--    <RadioButton-->
+<!--        android:id="@+id/rbAdmin"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_below="@id/ePassword"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:text="Admin" />-->
+
+
+    <RadioButton
+        android:id="@+id/rbTeacher"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/ePassword"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:text="Teacher" />
+
+    <!-- Nút đăng ký -->
+    <Button
+        android:id="@+id/btnaddteacher"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rbTeacher"
+        android:layout_marginTop="16dp"
+        android:text="Add Teacher" />
+
+    <!-- TextView hiển thị thông báo lỗi -->
+    <TextView
+        android:id="@+id/lblMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/btnaddteacher"
+        android:layout_marginTop="16dp"
+        android:textColor="@android:color/holo_red_dark" />
+</RelativeLayout>

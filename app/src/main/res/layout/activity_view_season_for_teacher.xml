@@ -1,0 +1,23 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/etSearchTeacher"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Search by Teacher" />
+
+    <EditText
+        android:id="@+id/etSearchDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Search by Date" />
+
+    <ListView
+        android:id="@+id/lvSeason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>

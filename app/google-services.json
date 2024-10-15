@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "966050639960",
+    "firebase_url": "https://yogaclass-b9905-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "yogaclass-b9905",
+    "storage_bucket": "yogaclass-b9905.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966050639960:android:2b9f924a6aa2d7e2e41a2d",
+        "android_client_info": {
+          "package_name": "com.example.yogaclass"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjFdLY0PlfvhprQLRHeII0pRqPGhP371Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

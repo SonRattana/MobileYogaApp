@@ -1,0 +1,63 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Text Input for Date -->
+    <EditText
+        android:id="@+id/etDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter class date (e.g., 17/10/2023)"
+        android:inputType="date" />
+
+    <!-- Spinner for Teacher selection -->
+    <Spinner
+        android:id="@+id/spTeacher"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
+
+    <!-- Text Input for Additional Comments -->
+    <EditText
+        android:id="@+id/etComments"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter additional comments (optional)"
+        android:inputType="textMultiLine" />
+
+    <!-- Text Input for Price -->
+    <EditText
+        android:id="@+id/etPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter price (e.g., 15.99)"
+        android:inputType="numberDecimal" />
+
+    <!-- Save Button -->
+    <Button
+        android:id="@+id/btnSaveInstance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Save Class Instance"
+        android:backgroundTint="@color/design_default_color_primary"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="16dp" />
+    <Button
+        android:id="@+id/btnViewSeason"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="View Seasons" />
+
+
+<!--    &lt;!&ndash; List View to show saved class instances with Edit/Delete &ndash;&gt;-->
+<!--    <ListView-->
+<!--        android:id="@+id/lvClassInstances"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="0dp"-->
+<!--        android:layout_weight="1"-->
+<!--        android:dividerHeight="1dp" />-->
+
+</LinearLayout>

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Universal Yoga Apps</string>
+    <string-array name="yoga_types">
+        <item>Flow Yoga</item>
+        <item>Aerial Yoga</item>
+        <item>Family Yoga</item>
+    </string-array>
+</resources>
