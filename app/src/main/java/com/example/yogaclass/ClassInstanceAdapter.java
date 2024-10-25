@@ -4,6 +4,7 @@ import static android.content.Context.CONNECTIVITY_SERVICE;
 import static androidx.core.content.ContextCompat.getSystemService;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -28,8 +29,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
 
@@ -95,33 +99,33 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
         notifyDataSetChanged();             // Notify the adapter that the data has changed
     }
 
-    // Hàm mở dialog chỉnh sửa ClassInstance
     private void showEditDialog(ClassInstance classInstance) {
         View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_edit_instance, null);
 
         // Tham chiếu tới các trường nhập liệu trong layout
-        EditText etDate = dialogView.findViewById(R.id.etDate);
         EditText etComments = dialogView.findViewById(R.id.etComments);
         EditText etPrice = dialogView.findViewById(R.id.etPrice);
-
-        // Lấy Spinner thay vì EditText cho teacher (vì bạn đã sử dụng Spinner để chọn teacher)
+        TextView tvDate = dialogView.findViewById(R.id.tvDate);  // Thay thế EditText bằng TextView để hiển thị ngày
         Spinner spTeacher = dialogView.findViewById(R.id.spTeacher);
 
         // Đặt giá trị hiện tại của ClassInstance vào các trường nhập liệu
-        etDate.setText(classInstance.getDate());
+        tvDate.setText(classInstance.getDate());
         etComments.setText(classInstance.getAdditionalComments());
         etPrice.setText(String.valueOf(classInstance.getPrice()));
 
         // Load teachers into spinner
         loadTeachersIntoSpinner(spTeacher, classInstance.getTeacher());
 
+        // Mở DatePickerDialog khi người dùng bấm vào trường ngày
+        tvDate.setOnClickListener(v -> openDatePicker(tvDate));
+
         new AlertDialog.Builder(context)
                 .setTitle("Edit Class Instance")
                 .setView(dialogView)
                 .setPositiveButton("Save", (dialog, which) -> {
                     // Lấy giá trị từ các trường nhập liệu
-                    String updatedDate = etDate.getText().toString();
-                    String updatedTeacher = spTeacher.getSelectedItem().toString();  // Lấy từ spinner
+                    String updatedDate = tvDate.getText().toString();  // Lấy ngày từ TextView
+                    String updatedTeacher = spTeacher.getSelectedItem().toString();
                     String updatedComments = etComments.getText().toString();
                     double updatedPrice = Double.parseDouble(etPrice.getText().toString());
 
@@ -137,6 +141,33 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
                 .setNegativeButton("Cancel", null)
                 .show();
     }
+
+    // Hàm mở DatePickerDialog
+    private void openDatePicker(TextView tvDate) {
+        final Calendar calendar = Calendar.getInstance();
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(context, (view, year, month, dayOfMonth) -> {
+            Calendar selectedDate = Calendar.getInstance();
+            selectedDate.set(year, month, dayOfMonth);
+
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            String formattedDate = sdf.format(selectedDate.getTime());
+
+            // Cập nhật TextView với ngày đã chọn
+            tvDate.setText(formattedDate);
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+
+        // Đặt giới hạn ngày nhỏ nhất là ngày hiện tại
+        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
+        datePickerDialog.show();
+    }
+    private boolean isCorrectDayOfWeek(String dayOfWeek, Calendar selectedDate) {
+        SimpleDateFormat sdf = new SimpleDateFormat("EEEE", Locale.getDefault());  // Lấy tên ngày trong tuần
+        String selectedDayName = sdf.format(selectedDate.getTime());
+
+        return dayOfWeek.equalsIgnoreCase(selectedDayName);  // So sánh với dayOfWeek của lớp học
+    }
+
 
     // Hàm cập nhật ClassInstance trong SQLite và Firebase
     private void updateClassInstanceInDatabase(ClassInstance classInstance) {

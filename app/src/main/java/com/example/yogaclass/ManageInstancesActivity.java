@@ -22,9 +22,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -41,7 +43,7 @@ public class ManageInstancesActivity extends AppCompatActivity {
 
     String yogaClassId;
     DatabaseReference classRef;
-    String selectedDayOfWeek;  // Biến lưu giá trị của dayOfWeek
+    String selectedDayOfWeek;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +75,8 @@ public class ManageInstancesActivity extends AppCompatActivity {
 
         btnViewSeason.setOnClickListener(v -> {
             Intent intent = new Intent(ManageInstancesActivity.this, ViewSeasonActivity.class);
+            intent.putExtra("YOGA_CLASS_ID", yogaClassId);
+            intent.putExtra("DAY_OF_WEEK", selectedDayOfWeek);
             startActivity(intent);
         });
 
@@ -92,76 +96,91 @@ public class ManageInstancesActivity extends AppCompatActivity {
         loadTeachersIntoSpinner();  // Load teachers into Spinner
     }
 
-    // Hàm mở DatePicker và chỉ cho phép chọn các ngày trùng với dayOfWeek
     private void openDatePicker() {
         final Calendar calendar = Calendar.getInstance();
+        long currentTime = calendar.getTimeInMillis(); // Lấy thời gian hiện tại
 
         // Tạo DatePickerDialog
         DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
             Calendar selectedDate = Calendar.getInstance();
             selectedDate.set(year, month, dayOfMonth);
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            String date = sdf.format(selectedDate.getTime());
 
-            if (isCorrectDayOfWeek(selectedDate)) {
-                // Định dạng lại ngày để hiển thị cho người dùng
-                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-                etDate.setText(sdf.format(selectedDate.getTime()));
+            // Kiểm tra nếu selectedDayOfWeek là null
+            if (selectedDayOfWeek == null) {
+                Toast.makeText(this, "Day of week is not set", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Kiểm tra xem ngày chọn có trùng với dayOfWeek của lớp học không
+            if (isCorrectDayOfWeek(selectedDayOfWeek, date)) {
+                etDate.setText(sdf.format(selectedDate.getTime()));  // Hiển thị ngày hợp lệ
             } else {
                 Toast.makeText(this, "Please select a valid " + selectedDayOfWeek, Toast.LENGTH_SHORT).show();
             }
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
 
-        // Giới hạn phạm vi của DatePicker để chỉ chọn được các ngày trùng với dayOfWeek
-        datePickerDialog.getDatePicker().setMinDate(getFirstCorrectDay(calendar).getTimeInMillis());
-        datePickerDialog.getDatePicker().setMaxDate(getLastCorrectDay(calendar).getTimeInMillis());
+        // Đặt giới hạn ngày nhỏ nhất là ngày hiện tại
+        datePickerDialog.getDatePicker().setMinDate(currentTime);
 
         datePickerDialog.show();
     }
 
-    // Tính ngày đầu tiên đúng với dayOfWeek kể từ ngày hiện tại
-    private Calendar getFirstCorrectDay(Calendar calendar) {
-        while (!isCorrectDayOfWeek(calendar)) {
-            calendar.add(Calendar.DATE, 1);
-        }
-        return calendar;
-    }
 
-    // Tính ngày cuối cùng đúng với dayOfWeek trong tương lai (giả sử trong vòng 1 năm)
-    private Calendar getLastCorrectDay(Calendar calendar) {
-        Calendar lastDate = (Calendar) calendar.clone();
-        lastDate.add(Calendar.YEAR, 1); // Giới hạn trong 1 năm
-        while (!isCorrectDayOfWeek(lastDate)) {
-            lastDate.add(Calendar.DATE, -1);
-        }
-        return lastDate;
-    }
+
+
 
     // Hàm kiểm tra xem ngày chọn có trùng với dayOfWeek của lớp học hay không
-    private boolean isCorrectDayOfWeek(Calendar selectedDate) {
-        int dayOfWeek = selectedDate.get(Calendar.DAY_OF_WEEK);
-        return mapDayOfWeek(dayOfWeek).equalsIgnoreCase(selectedDayOfWeek);
-    }
+    private boolean isCorrectDayOfWeek(String selectedDayOfWeek, String selectedDate) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        try {
+            // Chuyển đổi selectedDate từ String sang Date
+            Date date = sdf.parse(selectedDate);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
 
-    // Hàm chuyển đổi giá trị từ Calendar.DAY_OF_WEEK thành dạng chuỗi (ví dụ: "Monday", "Tuesday")
-    private String mapDayOfWeek(int dayOfWeek) {
-        switch (dayOfWeek) {
-            case Calendar.SUNDAY:
-                return "Sunday";
-            case Calendar.MONDAY:
-                return "Monday";
-            case Calendar.TUESDAY:
-                return "Tuesday";
-            case Calendar.WEDNESDAY:
-                return "Wednesday";
-            case Calendar.THURSDAY:
-                return "Thursday";
-            case Calendar.FRIDAY:
-                return "Friday";
-            case Calendar.SATURDAY:
-                return "Saturday";
-            default:
-                return "";
+            // Lấy giá trị ngày trong tuần dưới dạng int từ Calendar, sau đó chuyển thành chuỗi
+            int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+            String dayOfWeekNumber = String.valueOf(dayOfWeek);  // Chuyển đổi từ int thành String
+
+            // Chuyển đổi từ chuỗi số sang chuỗi tên ngày trong tuần
+            String dayOfWeekString = mapDayOfWeek(dayOfWeekNumber);
+
+            // So sánh chuỗi ngày trong tuần (ignore case để so sánh không phân biệt chữ hoa/thường)
+            return dayOfWeekString.equalsIgnoreCase(selectedDayOfWeek);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return false;  // Trả về false nếu có lỗi xảy ra trong quá trình parse ngày
         }
     }
+
+
+
+
+
+    // Hàm chuyển đổi giá trị từ Calendar.DAY_OF_WEEK thành dạng chuỗi (ví dụ: "Monday", "Tuesday")
+    private String mapDayOfWeek(String dayOfWeek) {
+        switch (dayOfWeek) {
+            case "1":  // Sunday
+                return "Sunday";
+            case "2":  // Monday
+                return "Monday";
+            case "3":  // Tuesday
+                return "Tuesday";
+            case "4":  // Wednesday
+                return "Wednesday";
+            case "5":  // Thursday
+                return "Thursday";
+            case "6":  // Friday
+                return "Friday";
+            case "7":  // Saturday
+                return "Saturday";
+            default:
+                return "Invalid day";
+        }
+    }
+
 
     private void saveClassInstance() {
         String date = etDate.getText().toString();
@@ -174,18 +193,22 @@ public class ManageInstancesActivity extends AppCompatActivity {
             return;
         }
 
+        // Kiểm tra xem ngày được chọn có khớp với dayOfWeek không
+        if (!isCorrectDayOfWeek(selectedDayOfWeek, date)) {
+            Toast.makeText(this, "Selected date does not match the required day of the week: " + selectedDayOfWeek, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         double price = Double.parseDouble(priceText);
 
         // Tạo ID mới cho Firebase
         String instanceId = classRef.push().getKey();
 
-        // Lưu buổi học mới vào SQLite và đồng bộ với Firebase
-        long result = dbHelper.insertClassInstance(instanceId, yogaClassId, date, teacher, comments, price); // Lưu vào SQLite
+        // Lưu vào SQLite
+        long result = dbHelper.insertClassInstance(instanceId, yogaClassId, date, teacher, comments, price);
 
         if (result != -1) {
-            // Đồng bộ dữ liệu với Firebase
             syncDataToFirebase(instanceId, yogaClassId, date, teacher, comments, price);
-
             Toast.makeText(this, "Class instance added successfully!", Toast.LENGTH_SHORT).show();
             // Chuyển hướng sau khi thêm thành công
             Intent intent = new Intent(ManageInstancesActivity.this, ViewSeasonActivity.class);

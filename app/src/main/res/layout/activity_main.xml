@@ -14,11 +14,12 @@
         android:padding="16dp">
 
         <!-- Các trường nhập thông tin -->
-        <EditText
-            android:id="@+id/etDayOfWeek"
+        <Spinner
+            android:id="@+id/spDayOfWeek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Day of the week" />
+            android:layout_marginTop="16dp"/>
+
 
         <EditText
             android:id="@+id/etTime"
@@ -79,6 +80,39 @@
             android:layout_height="wrap_content"
             android:text="Add Teacher"
             style="@style/CustomButton" />
+        <Button
+            android:id="@+id/btnManageUsers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Manage Users"
+            style="@style/CustomButton" />
+        <Button
+            android:id="@+id/btnViewCustomerBookings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="View Customer Bookings"
+            style="@style/CustomButton" />
+        <Button
+            android:id="@+id/btnManageCategory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Manage Categories"
+            style="@style/CustomButton" />
+
+        <Button
+            android:id="@+id/btnDeleteAll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Delete All Classes and Seasons"
+            style="@style/CustomButton" />
+
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            style="@style/CustomButton" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

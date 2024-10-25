@@ -39,8 +39,13 @@
         <activity android:name=".ManageInstancesActivity" android:exported="true" />
         <activity android:name=".ViewSeasonActivity" android:exported="true"/>
         <activity android:name=".ViewSeasonForTeacherActivity" android:exported="true"/>
-        <!--        <activity android:name=".ViewCoursesActivity" android:exported="true"/>-->
-        <!--        <activity android:name=".ViewClassInstancesActivity" android:exported="true"/>-->
+        <activity android:name=".ManageUsersActivity" android:exported="true"/>
+        <activity android:name=".CustomerBookingsActivity" android:exported="true"/>
+        <activity android:name=".CategoryManagementActivity" android:exported="true"/>
+
+
+
+
 
     </application>
 

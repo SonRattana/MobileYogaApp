@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/etCategoryName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Category Name" />
+
+    <Button
+        android:id="@+id/btnAddCategory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Category" />
+
+    <Button
+        android:id="@+id/btnUpdateCategory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Update Category" />
+
+    <Button
+        android:id="@+id/btnDeleteCategory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Delete Category" />
+
+    <ListView
+        android:id="@+id/lvCategories"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
+</LinearLayout>

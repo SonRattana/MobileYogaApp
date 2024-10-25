@@ -68,7 +68,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loginUser(String email, String password) {
-        // Kiểm tra người dùng trong SQLite trước
         if (dbHelper.checkUser(email, password)) {
             String role = dbHelper.getUserRole(email);
 
@@ -78,11 +77,11 @@ public class LoginActivity extends AppCompatActivity {
                 finish();
             } else if ("Teacher".equals(role)) {
                 Intent intent = new Intent(LoginActivity.this, TeacherActivity.class);
+                intent.putExtra("email", email);  // Truyền email của giáo viên
                 startActivity(intent);
                 finish();
             }
         } else {
-            // Nếu không tìm thấy trong SQLite, kiểm tra trên Firebase
             usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -96,9 +95,8 @@ public class LoginActivity extends AppCompatActivity {
                         if (dbEmail != null && dbPassword != null && dbEmail.equals(email) && dbPassword.equals(password)) {
                             userFound = true;
 
-                            // Lưu thông tin người dùng vào SQLite để sử dụng ngoại tuyến
-                            String name = snapshot.child("name").getValue(String.class); // Lấy name từ Firebase
-                            dbHelper.insertUser(name, email, password, role); // Lưu cả name
+                            String name = snapshot.child("name").getValue(String.class);
+                            dbHelper.insertUser(name, email, password, role);
 
                             if ("Admin".equals(role)) {
                                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
@@ -106,6 +104,7 @@ public class LoginActivity extends AppCompatActivity {
                                 finish();
                             } else if ("Teacher".equals(role)) {
                                 Intent intent = new Intent(LoginActivity.this, TeacherActivity.class);
+                                intent.putExtra("email", email);  // Truyền email của giáo viên
                                 startActivity(intent);
                                 finish();
                             }
@@ -125,5 +124,6 @@ public class LoginActivity extends AppCompatActivity {
             });
         }
     }
+
 
 }

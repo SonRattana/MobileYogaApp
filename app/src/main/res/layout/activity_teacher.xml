@@ -1,23 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="16dp">
+
 
     <EditText
         android:id="@+id/etSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Search classes"
-        android:padding="8dp"
+        android:hint="Search classes by Day of Week"
+        android:padding="12dp"
         android:layout_marginBottom="8dp"
         android:background="@drawable/search_background" />
+
+
+    <Spinner
+        android:id="@+id/spinnerTypeFilter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:layout_marginBottom="16dp" />
+
 
     <ListView
         android:id="@+id/lvClasses"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/etSearch"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:divider="@android:color/darker_gray"
-        android:dividerHeight="1dp" />
-</RelativeLayout>
+        android:dividerHeight="1dp"
+        android:padding="4dp" />
+
+
+    <Button
+        android:id="@+id/btnViewSeason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="View Season"
+        android:layout_marginTop="16dp"
+        style="@style/CustomButton" />
+
+
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Logout"
+        android:layout_marginTop="16dp"
+        style="@style/CustomButton"/>
+
+</LinearLayout>

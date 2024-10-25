@@ -11,7 +11,11 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:background="@drawable/search_background" />
-
+    <Spinner
+        android:id="@+id/spinnerFilterType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" />
     <ListView
         android:id="@+id/classListView"
         android:layout_width="match_parent"

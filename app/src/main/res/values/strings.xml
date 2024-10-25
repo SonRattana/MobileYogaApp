@@ -1,4 +1,14 @@
 <resources>
+    <string-array name="days_of_week">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </string-array>
+
     <string name="app_name">Universal Yoga Apps</string>
     <string-array name="yoga_types">
         <item>Flow Yoga</item>

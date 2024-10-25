@@ -14,7 +14,7 @@ import com.google.firebase.database.FirebaseDatabase;
 public class DBHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "YogaClass.db";
-    private static final int DATABASE_VERSION = 3;  // Increment this as necessary
+    private static final int DATABASE_VERSION = 4;  // Increment this as necessary
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -57,6 +57,16 @@ public class DBHelper extends SQLiteOpenHelper {
                         "password TEXT, " +
                         "role TEXT)"
         );
+        // Tạo bảng Users
+        db.execSQL(
+                "CREATE TABLE Users (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "name TEXT, " +
+                        "email TEXT UNIQUE, " +
+                        "password TEXT, " +
+                        "role TEXT)"
+        );
+
     }
 
     @Override
@@ -83,6 +93,19 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("description", yogaClass.getDescription());
 
         return db.insert("YogaClass", null, values);  // Trả về ID của dòng hoặc -1 nếu thất bại
+    }
+
+    // Chèn người dùng mới vào bảng Users
+    public boolean insertUserToUsers(String name, String email, String password, String role) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("name", name);
+        values.put("email", email);
+        values.put("password", password);
+        values.put("role", role);
+
+        long result = db.insert("Users", null, values);  // Chèn vào bảng Users
+        return result != -1;  // Trả về true nếu chèn thành công
     }
 
     // Chèn người dùng mới vào bảng UsersRole (đã thêm trường name)
@@ -152,13 +175,47 @@ public class DBHelper extends SQLiteOpenHelper {
         db.close();
         return result;  // Trả về ID của dòng hoặc -1 nếu thất bại
     }
+    public Cursor getClassInstancesByYogaClassId(String yogaClassId) {
+        if (yogaClassId == null || yogaClassId.isEmpty()) {
+            throw new IllegalArgumentException("Yoga Class ID cannot be null or empty");
+        }
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM ClassInstance WHERE yogaClassId = ?", new String[]{yogaClassId});
+    }
 
+    public Cursor getClassInstancesByTeacherName(String teacherName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM ClassInstance WHERE teacher = ?", new String[]{teacherName});
+    }
 
     // Lấy tất cả các phiên bản của lớp Yoga cụ thể
     public Cursor getClassInstancesByCourse(String yogaClassId) {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM ClassInstance WHERE yogaClassId = ?", new String[]{String.valueOf(yogaClassId)});
     }
+
+    // Trong DBHelper, phương thức này sẽ lấy đúng dayOfWeek cho từng yogaClassId
+    public String getDayOfWeekByYogaClassId(String yogaClassId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String dayOfWeek = null;
+
+        // Thực hiện truy vấn lấy dayOfWeek từ YogaClass dựa trên id
+        Cursor cursor = db.rawQuery("SELECT dayOfWeek FROM YogaClass WHERE id = ?", new String[]{yogaClassId});
+
+        if (cursor.moveToFirst()) {
+            dayOfWeek = cursor.getString(0);  // Lấy giá trị dayOfWeek từ cột đầu tiên
+            Log.d("DBHelper", "DayOfWeek for YogaClassId " + yogaClassId + ": " + dayOfWeek);
+        } else {
+            Log.e("DBHelper", "No dayOfWeek found for YogaClassId: " + yogaClassId);
+        }
+
+        cursor.close();
+        db.close();
+
+        return dayOfWeek;
+    }
+
+
 
     // Retrieve all class instances
     public Cursor getAllClassInstances() {

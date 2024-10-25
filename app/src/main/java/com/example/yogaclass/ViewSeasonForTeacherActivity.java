@@ -1,5 +1,6 @@
 package com.example.yogaclass;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.text.Editable;
@@ -15,7 +16,7 @@ public class ViewSeasonForTeacherActivity extends AppCompatActivity {
     ListView lvSeason;
     ArrayList<ClassInstance> instanceList;
     ClassInstanceAdapter adapter;
-    EditText etSearchTeacher, etSearchDate;
+    EditText etSearchDate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,24 +24,27 @@ public class ViewSeasonForTeacherActivity extends AppCompatActivity {
         setContentView(R.layout.activity_view_season_for_teacher);
 
         lvSeason = findViewById(R.id.lvSeason);
-        etSearchTeacher = findViewById(R.id.etSearchTeacher);
+//        etSearchTeacher = findViewById(R.id.etSearchTeacher);
         etSearchDate = findViewById(R.id.etSearchDate);
         dbHelper = new DBHelper(this);
         instanceList = new ArrayList<>();
 
+        Intent intent = getIntent();
+        String teacherName = intent.getStringExtra("teacherName");
+
         // Initialize the adapter and set it to the ListView
-        adapter = new ClassInstanceAdapter(this, instanceList, dbHelper, null, "Teacher");  // No Firebase reference needed
+        adapter = new ClassInstanceAdapter(this, instanceList, dbHelper, null, "Teacher");  // Không cần Firebase reference
         lvSeason.setAdapter(adapter);
 
-        // Load class instances for the teacher to view
-        loadClassInstances();
+        // Load class instances filtered by the teacher name
+        loadClassInstances(teacherName);
 
         // Setup search filters for teacher name and date
         setupSearchFilters();
     }
 
-    private void loadClassInstances() {
-        Cursor cursor = dbHelper.getAllClassInstances();  // Load all instances
+    private void loadClassInstances(String teacherName) {
+        Cursor cursor = dbHelper.getClassInstancesByTeacherName(teacherName);  // Lọc các instance theo tên giáo viên
         instanceList.clear();
 
         if (cursor != null && cursor.moveToFirst()) {
@@ -64,22 +68,9 @@ public class ViewSeasonForTeacherActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
+
     private void setupSearchFilters() {
-        // Search by teacher name
-        etSearchTeacher.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterByTeacher(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
-        });
-
-        // Search by date
+        // Xóa các phần liên quan đến etSearchTeacher nếu không còn sử dụng nó
         etSearchDate.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -92,6 +83,7 @@ public class ViewSeasonForTeacherActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {}
         });
+
     }
 
     private void filterByTeacher(String teacherName) {

@@ -20,7 +20,7 @@
         android:layout_marginTop="16dp"
         android:hint="Email" />
 
-    <!-- Trường nhập mật khẩu -->
+
     <EditText
         android:id="@+id/ePassword"
         android:layout_width="match_parent"
@@ -36,6 +36,7 @@
 <!--        android:layout_width="wrap_content"-->
 <!--        android:layout_height="wrap_content"-->
 <!--        android:layout_below="@id/ePassword"-->
+<!--        android:layout_marginLeft="150dp"-->
 <!--        android:layout_marginTop="16dp"-->
 <!--        android:text="Admin" />-->
 
@@ -49,7 +50,7 @@
         android:layout_marginStart="16dp"
         android:text="Teacher" />
 
-    <!-- Nút đăng ký -->
+
     <Button
         android:id="@+id/btnaddteacher"
         android:layout_width="match_parent"
@@ -58,7 +59,7 @@
         android:layout_marginTop="16dp"
         android:text="Add Teacher" />
 
-    <!-- TextView hiển thị thông báo lỗi -->
+
     <TextView
         android:id="@+id/lblMessage"
         android:layout_width="match_parent"
