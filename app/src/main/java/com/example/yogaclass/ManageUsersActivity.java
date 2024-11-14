@@ -19,7 +19,7 @@ public class ManageUsersActivity extends AppCompatActivity {
     DBHelper dbHelper;
     ListView lvUsers;
     ArrayList<User> userList;
-    ArrayList<String> userIds; // Danh sách userIds
+    ArrayList<String> userIds;
     UserAdapter adapter;
     DatabaseReference usersRef;
 
@@ -33,7 +33,7 @@ public class ManageUsersActivity extends AppCompatActivity {
         userList = new ArrayList<>();
         userIds = new ArrayList<>();
 
-        // Initialize Firebase database reference
+
         usersRef = FirebaseDatabase.getInstance().getReference("users");
 
 

@@ -65,7 +65,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         "name TEXT UNIQUE)"
         );
 
-        // Tạo bảng Teachers để lưu trữ danh sách giáo viên
+
         db.execSQL("CREATE TABLE IF NOT EXISTS Teachers (name TEXT PRIMARY KEY)");
     }
 
@@ -297,10 +297,10 @@ public class DBHelper extends SQLiteOpenHelper {
         return hasInstances;
     }
 
-    // Phương thức lưu danh sách giáo viên vào SQLite
+
     public void saveTeachersToSQLite(ArrayList<String> teacherList) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("DELETE FROM Teachers"); // Xóa dữ liệu cũ
+        db.execSQL("DELETE FROM Teachers");
         for (String teacher : teacherList) {
             ContentValues values = new ContentValues();
             values.put("name", teacher);
@@ -309,7 +309,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    // Phương thức lấy danh sách giáo viên từ SQLite
+
     public ArrayList<String> getAllTeachersFromSQLite() {
         ArrayList<String> teacherList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();

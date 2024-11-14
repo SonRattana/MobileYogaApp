@@ -34,7 +34,7 @@ public class TeacherActivity extends AppCompatActivity {
     ArrayAdapter<String> adapter;
     ArrayList<Integer> idList;
     EditText etSearch;
-    Spinner spinnerTypeFilter; // Spinner cho lọc theo Type
+    Spinner spinnerTypeFilter;
     Button btnLogout, btnViewSeason;
     String currentTeacherName;
 
@@ -45,7 +45,7 @@ public class TeacherActivity extends AppCompatActivity {
 
         lvClasses = findViewById(R.id.lvClasses);
         etSearch = findViewById(R.id.etSearch);
-        spinnerTypeFilter = findViewById(R.id.spinnerTypeFilter); // Spinner lọc theo Type
+        spinnerTypeFilter = findViewById(R.id.spinnerTypeFilter);
         btnLogout = findViewById(R.id.btnLogout);
         btnViewSeason = findViewById(R.id.btnViewSeason);
         dbHelper = new DBHelper(this);
@@ -55,7 +55,7 @@ public class TeacherActivity extends AppCompatActivity {
         syncDataFromFirebase();
         loadClasses();
 
-        // Xử lý sự kiện nhấn nút đăng xuất
+
         btnLogout.setOnClickListener(v -> logout());
 
         etSearch.addTextChangedListener(new TextWatcher() {
@@ -71,43 +71,43 @@ public class TeacherActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        // Thiết lập dữ liệu cho Spinner Type từ SQLite hoặc Firebase
+
         setupTypeFilter();
 
-        // Xử lý sự kiện khi người dùng thay đổi giá trị trong Spinner
+
         spinnerTypeFilter.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedType = parent.getItemAtPosition(position).toString();
-                filterClasses(etSearch.getText().toString(), selectedType); // Lọc theo từ khóa và type
+                filterClasses(etSearch.getText().toString(), selectedType);
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        // Lấy email từ Intent
+
         String email = getIntent().getStringExtra("email");
         if (email != null) {
             currentTeacherName = dbHelper.getUserName(email);
 
             if (currentTeacherName != null) {
-                loadClasses();  // Tải danh sách lớp học sau khi lấy tên giáo viên
+                loadClasses();
             } else {
                 Toast.makeText(TeacherActivity.this, "User data not found in SQLite.", Toast.LENGTH_SHORT).show();
             }
         }
 
-        // Thiết lập sự kiện khi nhấn vào nút View Season
+
         btnViewSeason.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!idList.isEmpty()) {
-                    // Giả sử bạn muốn lấy ID của lớp đầu tiên
-                    int classId = idList.get(0);  // Lấy classId từ idList (thay thế theo yêu cầu)
+
+                    int classId = idList.get(0);
                     Intent intent = new Intent(TeacherActivity.this, ViewSeasonForTeacherActivity.class);
                     intent.putExtra("classId", classId);
-                    intent.putExtra("teacherName", currentTeacherName);  // Truyền tên giáo viên vào Intent
+                    intent.putExtra("teacherName", currentTeacherName);
                     startActivity(intent);
                 } else {
                     Toast.makeText(TeacherActivity.this, "No classes available", Toast.LENGTH_SHORT).show();
@@ -118,7 +118,7 @@ public class TeacherActivity extends AppCompatActivity {
 
     private void setupTypeFilter() {
         ArrayList<String> typeList = new ArrayList<>();
-        typeList.add("All");  // Thêm lựa chọn "All"
+        typeList.add("All");
 
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT DISTINCT type FROM YogaClass", null);
@@ -131,7 +131,7 @@ public class TeacherActivity extends AppCompatActivity {
         }
         cursor.close();
 
-        // Thiết lập Adapter cho Spinner
+
         ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, typeList);
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTypeFilter.setAdapter(typeAdapter);
@@ -145,7 +145,7 @@ public class TeacherActivity extends AppCompatActivity {
         for (int i = 0; i < classList.size(); i++) {
             String classDetails = classList.get(i);
 
-            // Lọc theo từ khóa tìm kiếm và loại Type đã chọn hoặc nếu là "All", bỏ qua lọc theo Type
+
             if (classDetails.toLowerCase().contains(searchText.toLowerCase()) &&
                     (selectedType.equals("All") || classDetails.toLowerCase().contains(selectedType.toLowerCase()))) {
                 filteredClasses.add(classDetails);
@@ -155,7 +155,7 @@ public class TeacherActivity extends AppCompatActivity {
             }
         }
 
-        // Cập nhật ListView với danh sách đã lọc
+
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, filteredClasses);
         lvClasses.setAdapter(adapter);
         idList = filteredIds;
@@ -163,7 +163,7 @@ public class TeacherActivity extends AppCompatActivity {
 
 
     private void logout() {
-        // Xử lý đăng xuất và quay về màn hình đăng nhập
+
         Intent intent = new Intent(TeacherActivity.this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
@@ -226,7 +226,7 @@ public class TeacherActivity extends AppCompatActivity {
                         "Type: " + type + "\n" +
                         "Quantity: " + quantity + "\n" +
                         "Duration: " + duration + " mins\n" +
-                        "Price: $" + String.format("%.2f", price) + "\n" + // Hiển thị giá tiền
+                        "Price: $" + String.format("%.2f", price) + "\n" +
                         "Description: " + (description != null ? description : "N/A");
 
                 classList.add(classDetails);

@@ -11,6 +11,17 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:background="@drawable/search_background" />
+
+    <Spinner
+        android:id="@+id/spinnerFilterDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:prompt="@string/select_date" />
+
+
+
+
     <ListView
         android:id="@+id/lvSeason"
         android:layout_width="match_parent"
@@ -18,9 +29,4 @@
         android:layout_weight="1"
         android:dividerHeight="1dp" />
 
-<!--    <Button-->
-<!--        android:id="@+id/btnBack"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="Back" />-->
 </LinearLayout>

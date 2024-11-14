@@ -76,7 +76,7 @@ public class LoginActivity extends AppCompatActivity {
                 finish();
             } else if ("Teacher".equals(role)) {
                 Intent intent = new Intent(LoginActivity.this, TeacherActivity.class);
-                intent.putExtra("email", email);  // Truyền email của giáo viên
+                intent.putExtra("email", email);
                 startActivity(intent);
                 finish();
             }
@@ -103,7 +103,7 @@ public class LoginActivity extends AppCompatActivity {
                                 finish();
                             } else if ("Teacher".equals(role)) {
                                 Intent intent = new Intent(LoginActivity.this, TeacherActivity.class);
-                                intent.putExtra("email", email);  // Truyền email của giáo viên
+                                intent.putExtra("email", email);
                                 startActivity(intent);
                                 finish();
                             }

@@ -10,8 +10,12 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -35,6 +39,7 @@ public class ViewSeasonActivity extends AppCompatActivity {
     DatabaseReference classRef;
     String yogaClassId;
     EditText etSearch;
+    Spinner spinnerFilterDate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,12 +48,13 @@ public class ViewSeasonActivity extends AppCompatActivity {
 
         lvSeason = findViewById(R.id.lvSeason);
         etSearch = findViewById(R.id.etSearch);
+        spinnerFilterDate = findViewById(R.id.spinnerFilterDate);
         dbHelper = new DBHelper(this);
         classRef = FirebaseDatabase.getInstance().getReference("classinstances");
         instanceList = new ArrayList<>();
         originalInstanceList = new ArrayList<>();
 
-        // Get the yogaClassId passed from the previous activity
+
         yogaClassId = getIntent().getStringExtra("YOGA_CLASS_ID");
 
         if (yogaClassId == null) {
@@ -58,11 +64,10 @@ public class ViewSeasonActivity extends AppCompatActivity {
         }
 
         loadClassInstances();
+        loadDatesIntoSpinner();
 
         adapter = new ClassInstanceAdapter(this, instanceList, dbHelper, classRef, "Admin");
         lvSeason.setAdapter(adapter);
-
-
 
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -76,9 +81,24 @@ public class ViewSeasonActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {}
         });
+
+
+        spinnerFilterDate.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedDate = (String) parent.getItemAtPosition(position);
+                filterInstancesByDate(selectedDate);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
     }
 
-    // Kiểm tra trạng thái kết nối mạng
+
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
@@ -99,6 +119,46 @@ public class ViewSeasonActivity extends AppCompatActivity {
             boolean matchesDate = instance.getDate().contains(keyword);
 
             if (matchesTeacher || matchesDate) {
+                filteredList.add(instance);
+            }
+        }
+
+        adapter.updateData(filteredList);
+    }
+
+
+    private void loadDatesIntoSpinner() {
+        ArrayList<String> dates = new ArrayList<>();
+        dates.add("All");
+
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT DISTINCT date FROM ClassInstance WHERE yogaClassId = ?", new String[]{yogaClassId});
+
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                String date = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+                if (date != null) {
+                    dates.add(date);
+                }
+            }
+            cursor.close();
+        }
+
+        ArrayAdapter<String> dateAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, dates);
+        dateAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerFilterDate.setAdapter(dateAdapter);
+    }
+
+
+    private void filterInstancesByDate(String selectedDate) {
+        if (selectedDate.equals("All")) {
+            adapter.updateData(originalInstanceList);
+            return;
+        }
+
+        ArrayList<ClassInstance> filteredList = new ArrayList<>();
+        for (ClassInstance instance : originalInstanceList) {
+            if (instance.getDate().equals(selectedDate)) {
                 filteredList.add(instance);
             }
         }
@@ -137,7 +197,7 @@ public class ViewSeasonActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
-                db.execSQL("DELETE FROM ClassInstance"); // Xóa dữ liệu cũ trong SQLite
+                db.execSQL("DELETE FROM ClassInstance");
                 for (DataSnapshot classInstanceSnapshot : dataSnapshot.getChildren()) {
                     String yogaClassId = classInstanceSnapshot.getKey();
                     for (DataSnapshot snapshot : classInstanceSnapshot.getChildren()) {
@@ -156,14 +216,14 @@ public class ViewSeasonActivity extends AppCompatActivity {
                             values.put("additionalComments", additionalComments);
                             values.put("price", price);
 
-                            db.insert("ClassInstance", null, values); // Lưu vào SQLite
+                            db.insert("ClassInstance", null, values);
                         } else {
                             Log.e("ViewSeasonActivity", "Missing required fields for class instance");
                         }
                     }
                 }
                 db.close();
-                loadClassInstances(); // Sau khi đồng bộ, tải dữ liệu từ SQLite để hiển thị
+                loadClassInstances();
             }
 
             @Override

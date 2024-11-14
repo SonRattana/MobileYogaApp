@@ -26,7 +26,7 @@ public class UserAdapter extends ArrayAdapter<User> {
     private ArrayList<User> users;
     private DBHelper dbHelper;
     private DatabaseReference usersRef;
-    private ArrayList<String> userIds;  // Thêm danh sách userIds để lưu ID Firebase
+    private ArrayList<String> userIds;
 
     public UserAdapter(Context context, ArrayList<User> users, ArrayList<String> userIds, DBHelper dbHelper) {
         super(context, 0, users);
@@ -44,28 +44,28 @@ public class UserAdapter extends ArrayAdapter<User> {
             convertView = LayoutInflater.from(context).inflate(R.layout.list_item_user, parent, false);
         }
 
-        // Lấy người dùng và ID hiện tại
-        User user = users.get(position);
-        String userId = userIds.get(position);  // Lấy ID của người dùng tại vị trí này
 
-        // Hiển thị tên và email của người dùng
+        User user = users.get(position);
+        String userId = userIds.get(position);
+
+
         TextView tvUserName = convertView.findViewById(R.id.tvUserName);
         TextView tvUserEmail = convertView.findViewById(R.id.tvUserEmail);
         TextView tvUserRole = convertView.findViewById(R.id.tvUserRole);
         tvUserName.setText(user.getName());
         tvUserEmail.setText(user.getEmail());
         tvUserRole.setText(user.getRole());
-        // Nút chỉnh sửa
+
         ImageButton btnEdit = convertView.findViewById(R.id.btnEditUser);
         btnEdit.setOnClickListener(v -> {
-            // Hiển thị dialog chỉnh sửa tên
-            showEditDialog(user, userId);  // Truyền userId vào để cập nhật chính xác
+
+            showEditDialog(user, userId);
         });
 
         return convertView;
     }
 
-    // Hiển thị dialog để chỉnh sửa tên người dùng
+
     private void showEditDialog(User user, String userId) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Edit User Name");

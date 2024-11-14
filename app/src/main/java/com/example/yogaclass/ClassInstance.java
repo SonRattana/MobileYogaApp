@@ -8,7 +8,7 @@ public class ClassInstance {
     private String additionalComments;
     private double price;
 
-    // Constructor đầy đủ với tất cả các thuộc tính
+
     public ClassInstance(String id, String yogaClassId, String date, String teacher, String additionalComments, double price) {
         this.id = id;
         this.yogaClassId = yogaClassId;
@@ -18,7 +18,7 @@ public class ClassInstance {
         this.price = price;
     }
 
-    // Getter và Setter cho từng thuộc tính
+
     public String getInstanceId() {
         return id;
     }

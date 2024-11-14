@@ -46,7 +46,7 @@ public class DisplayClassesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display_classes);
 
-        // Initialize UI components
+
         classListView = findViewById(R.id.classListView);
         etSearch = findViewById(R.id.etSearch);
         spinnerFilterType = findViewById(R.id.spinnerFilterType);
@@ -54,20 +54,20 @@ public class DisplayClassesActivity extends AppCompatActivity {
         dbHelper = new DBHelper(this);
         yogaClasses = new ArrayList<>();
 
-        // Initialize Firebase reference
+
         yogaClassesRef = FirebaseDatabase.getInstance().getReference("yogaclasses");
 
-        // Sync data from Firebase to SQLite
+
         if (isNetworkAvailable()) {
             syncDataFromFirebase();
         } else {
             loadDataFromSQLite();
         }
 
-        // Load classes from SQLite
+
         loadClasses();
 
-        // Implement search functionality
+
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -82,7 +82,7 @@ public class DisplayClassesActivity extends AppCompatActivity {
         });
 
 
-        // Setup filters for Type and Day of the Week
+
         spinnerFilterType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -103,7 +103,7 @@ public class DisplayClassesActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        // When a user clicks on a class, go to ManageInstancesActivity
+
         classListView.setOnItemClickListener((parent, view, position, id) -> {
             YogaClass selectedClass = yogaClasses.get(position);
 
@@ -130,7 +130,7 @@ public class DisplayClassesActivity extends AppCompatActivity {
         return false;
     }
 
-    // Load classes from SQLite when offline
+
     private void loadDataFromSQLite() {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM YogaClass", null);
@@ -204,7 +204,7 @@ public class DisplayClassesActivity extends AppCompatActivity {
         });
     }
 
-    // Load Types for Spinner Filter from class data
+
     private void loadFilterTypes() {
         ArrayList<String> types = new ArrayList<>();
         types.add("All");
@@ -220,10 +220,10 @@ public class DisplayClassesActivity extends AppCompatActivity {
         spinnerFilterType.setAdapter(typeAdapter);
     }
 
-    // Load Days for Spinner Filter from class data
+
     private void loadFilterDays() {
         ArrayList<String> days = new ArrayList<>();
-        days.add("All");  // Option to show all days
+        days.add("All");
         days.add("Monday");
         days.add("Tuesday");
         days.add("Wednesday");
@@ -237,7 +237,7 @@ public class DisplayClassesActivity extends AppCompatActivity {
         spinnerFilterDay.setAdapter(dayAdapter);
     }
 
-    // Filter classes by Type and Day of the Week
+
     private void filterByTypeAndDay() {
         String selectedType = spinnerFilterType.getSelectedItem().toString();
         String selectedDay = spinnerFilterDay.getSelectedItem().toString();

@@ -1,14 +1,14 @@
 package com.example.yogaclass;
 
 public class User {
-    private String id; // ID của người dùng
+    private String id;
     private String name;
     private String email;
-    private String password; // Nếu cần thiết
-    private String role;     // Thêm thuộc tính role
+    private String password;
+    private String role;
 
     public User() {
-        // Constructor mặc định cho Firebase
+
     }
 
     public User(String id, String name, String email, String password, String role) {
@@ -16,10 +16,10 @@ public class User {
         this.name = name;
         this.email = email;
         this.password = password;
-        this.role = role;  // Gán giá trị role
+        this.role = role;
     }
 
-    // Getter và Setter cho các thuộc tính
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

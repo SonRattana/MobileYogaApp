@@ -23,19 +23,19 @@ public class CustomerBookingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_customer_bookings);
 
-        // Liên kết với ListView trong giao diện
+
         lvBookings = findViewById(R.id.lvBookings);
 
-        // Khởi tạo Firebase và tham chiếu đến "bookings"
+
         database = FirebaseDatabase.getInstance();
         bookingsRef = database.getReference("bookings");
 
-        // Khởi tạo danh sách và adapter
+
         bookingsList = new ArrayList<>();
         bookingAdapter = new BookingAdapter(this, R.layout.list_item_booking, bookingsList);
         lvBookings.setAdapter(bookingAdapter);
 
-        // Load dữ liệu từ Firebase
+
         loadBookings();
     }
 

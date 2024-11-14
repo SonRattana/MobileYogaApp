@@ -30,45 +30,45 @@ public class CategoryManagementActivity extends AppCompatActivity {
     private DatabaseReference categoriesRef;
     private ArrayAdapter<String> categoryAdapter;
     private ArrayList<String> categoryList;
-    private String selectedCategory = null; // Giữ track danh mục được chọn để sửa hoặc xóa
+    private String selectedCategory = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_category_management);
 
-        // Liên kết giao diện người dùng
+
         etCategoryName = findViewById(R.id.etCategoryName);
         btnAddCategory = findViewById(R.id.btnAddCategory);
         btnUpdateCategory = findViewById(R.id.btnUpdateCategory);
         btnDeleteCategory = findViewById(R.id.btnDeleteCategory);
         lvCategories = findViewById(R.id.lvCategories);
         dbHelper = new DBHelper(this);
-        // Firebase reference
+
         database = FirebaseDatabase.getInstance();
         categoriesRef = database.getReference("categories");
 
-        // Khởi tạo danh sách và adapter
+
         categoryList = new ArrayList<>();
         categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, categoryList);
         lvCategories.setAdapter(categoryAdapter);
 
-        // Load danh sách category từ Firebase
+
         loadCategories();
         loadCategoriesFromSQLite();
-        // Xử lý sự kiện khi click vào một category từ ListView
+
         lvCategories.setOnItemClickListener((parent, view, position, id) -> {
             selectedCategory = categoryList.get(position);
             etCategoryName.setText(selectedCategory);
         });
 
-        // Nút thêm danh mục
+
         btnAddCategory.setOnClickListener(v -> addCategory());
 
-        // Nút sửa danh mục
+
         btnUpdateCategory.setOnClickListener(v -> updateCategory());
 
-        // Nút xóa danh mục
+
         btnDeleteCategory.setOnClickListener(v -> deleteCategory());
     }
 

@@ -30,7 +30,7 @@ public class BookingAdapter extends ArrayAdapter<Booking> {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_booking, parent, false);
         }
 
-        // Get the views
+
         TextView tvUserEmail = convertView.findViewById(R.id.tvUserEmail);
         TextView tvYogaClassId = convertView.findViewById(R.id.tvYogaClassId);
         TextView tvDate = convertView.findViewById(R.id.tvDate);
@@ -38,20 +38,20 @@ public class BookingAdapter extends ArrayAdapter<Booking> {
         TextView tvPrice = convertView.findViewById(R.id.tvPrice);
         TextView tvAdditionalComments = convertView.findViewById(R.id.tvAdditionalComments);
 
-        // Get the current booking object
+
         Booking booking = getItem(position);
 
-        // Set the data
+
         tvUserEmail.setText(booking.getUserEmail());
 
-        // Access SeasonDetails within Booking
+
         SeasonDetails seasonDetails = booking.getSeasonDetails();
         if (seasonDetails != null) {
             tvYogaClassId.setText(seasonDetails.getId());
             tvDate.setText(seasonDetails.getDate());
             tvTeacher.setText(seasonDetails.getTeacher());
 
-            // Format the price with the $ symbol
+
             tvPrice.setText("$" + String.valueOf(seasonDetails.getPrice()));
 
             tvAdditionalComments.setText(seasonDetails.getAdditionalComments());

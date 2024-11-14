@@ -17,4 +17,6 @@
     </string-array>
     <string name="filter_by_type">Filter by Type</string>
     <string name="filter_by_day">Filter by Day of the Week</string>
+    <string name="select_date">Select Date</string>
+
 </resources>

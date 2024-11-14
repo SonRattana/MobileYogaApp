@@ -41,7 +41,7 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
     private Context context;
     private DBHelper dbHelper;
     private DatabaseReference classRef;
-    private String currentUserRole;  // "Admin" or "Teacher"
+    private String currentUserRole;
 
     public ClassInstanceAdapter(Context context, List<ClassInstance> instances, DBHelper dbHelper, DatabaseReference classRef, String currentUserRole) {
         super(context, 0, instances);
@@ -60,33 +60,33 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
             convertView = LayoutInflater.from(context).inflate(R.layout.list_item_instance, parent, false);
         }
 
-        // Fetch views
+
         TextView tvDate = convertView.findViewById(R.id.tvDate);
         TextView tvTeacher = convertView.findViewById(R.id.tvTeacher);
         TextView tvPrice = convertView.findViewById(R.id.tvPrice);
         TextView tvComments = convertView.findViewById(R.id.tvComments);
 
-        // Bind data to views
+
         tvDate.setText(instance.getDate());
         tvTeacher.setText(instance.getTeacher());
         tvPrice.setText(String.format(Locale.getDefault(), "$%.2f", instance.getPrice()));
         tvComments.setText(instance.getAdditionalComments());
 
-        // Fetch buttons
+
         Button btnEdit = convertView.findViewById(R.id.btnEdit);
         Button btnDelete = convertView.findViewById(R.id.btnDelete);
 
-        // Show/Hide buttons based on the role
+
         if ("Teacher".equals(currentUserRole)) {
-            // Teachers can only view, so hide Edit and Delete buttons
+
             btnEdit.setVisibility(View.GONE);
             btnDelete.setVisibility(View.GONE);
         } else {
-            // Admins can edit and delete
+
             btnEdit.setVisibility(View.VISIBLE);
             btnDelete.setVisibility(View.VISIBLE);
 
-            // Set up edit and delete button functionality for Admins
+
             btnEdit.setOnClickListener(v -> showEditDialog(instance));
             btnDelete.setOnClickListener(v -> deleteClassInstance(instance));
         }
@@ -94,9 +94,9 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
         return convertView;
     }
     public void updateList(ArrayList<ClassInstance> newList) {
-        instanceList.clear();               // Clear the existing list
-        instanceList.addAll(newList);       // Add the new filtered list
-        notifyDataSetChanged();             // Notify the adapter that the data has changed
+        instanceList.clear();
+        instanceList.addAll(newList);
+        notifyDataSetChanged();
     }
 
     private void showEditDialog(ClassInstance classInstance) {
@@ -143,14 +143,14 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
         datePickerDialog.show();
     }
     private boolean isCorrectDayOfWeek(String dayOfWeek, Calendar selectedDate) {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEEE", Locale.getDefault());  // Lấy tên ngày trong tuần
+        SimpleDateFormat sdf = new SimpleDateFormat("EEEE", Locale.getDefault());
         String selectedDayName = sdf.format(selectedDate.getTime());
 
-        return dayOfWeek.equalsIgnoreCase(selectedDayName);  // So sánh với dayOfWeek của lớp học
+        return dayOfWeek.equalsIgnoreCase(selectedDayName);
     }
 
 
-    // Hàm cập nhật ClassInstance trong SQLite và Firebase
+
     private void updateClassInstanceInDatabase(ClassInstance classInstance) {
         String instanceId = classInstance.getInstanceId();
         String updatedDate = classInstance.getDate();
@@ -172,7 +172,7 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
         notifyDataSetChanged();
     }
 
-    // Hàm kiểm tra kết nối mạng
+
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager = ContextCompat.getSystemService(getContext(), ConnectivityManager.class);
         if (connectivityManager != null) {
@@ -188,10 +188,10 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
                 .setMessage("Are you sure you want to delete this class instance?")
                 .setPositiveButton("Yes", (dialog, which) -> {
                     if (isNetworkAvailable()) {
-                        // Xóa từ cả Firebase và SQLite khi có mạng
+
                         deleteFromFirebaseAndSQLite(classInstance);
                     } else {
-                        // Xóa trong SQLite và thông báo cho người dùng về kết nối mạng
+
                         deleteFromSQLiteOnly(classInstance);
                         Toast.makeText(context, "No network. Only deleted locally. Will sync with Firebase when online.", Toast.LENGTH_SHORT).show();
                     }
@@ -201,18 +201,18 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
     }
 
     private void deleteFromFirebaseAndSQLite(ClassInstance classInstance) {
-        // Xóa trong SQLite
+
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         int rowsDeleted = db.delete("ClassInstance", "id = ?", new String[]{classInstance.getInstanceId()});
 
         if (rowsDeleted > 0) {
-            // Xóa trong Firebase
+
             DatabaseReference instanceRef = classRef.child(classInstance.getYogaClassId()).child(classInstance.getInstanceId());
             instanceRef.removeValue()
                     .addOnSuccessListener(aVoid -> {
                         Toast.makeText(context, "Class Instance deleted successfully from Firebase and SQLite!", Toast.LENGTH_SHORT).show();
                         instanceList.remove(classInstance);
-                        notifyDataSetChanged(); // Cập nhật danh sách trên giao diện
+                        notifyDataSetChanged();
                     })
                     .addOnFailureListener(e -> {
                         Toast.makeText(context, "Failed to delete from Firebase", Toast.LENGTH_SHORT).show();
@@ -223,7 +223,7 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
         db.close();
     }
 
-    // Chỉ xóa trong SQLite khi không có mạng
+
     private void deleteFromSQLiteOnly(ClassInstance classInstance) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         int rowsDeleted = db.delete("ClassInstance", "id = ?", new String[]{classInstance.getInstanceId()});
@@ -231,7 +231,7 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
         if (rowsDeleted > 0) {
             Toast.makeText(context, "Class Instance deleted successfully from SQLite!", Toast.LENGTH_SHORT).show();
             instanceList.remove(classInstance);
-            notifyDataSetChanged(); // Cập nhật danh sách trên giao diện
+            notifyDataSetChanged();
         } else {
             Toast.makeText(context, "Failed to delete from SQLite", Toast.LENGTH_SHORT).show();
         }
@@ -240,21 +240,21 @@ public class ClassInstanceAdapter extends ArrayAdapter<ClassInstance> {
 
 
 
-    // Load teachers into the Spinner from SQLite
+
     private void loadTeachersIntoSpinner(Spinner spTeacher, String currentTeacher) {
         ArrayList<String> teacherList = dbHelper.getAllTeachersFromSQLite();
 
-        // Nếu không có giáo viên nào trong SQLite, thêm tùy chọn trống
+
         if (teacherList.isEmpty()) {
             teacherList.add("No teachers available");
         }
 
-        // Gán danh sách giáo viên vào Spinner
+
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, teacherList);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spTeacher.setAdapter(adapter);
 
-        // Đặt tùy chọn của Spinner theo tên giáo viên hiện tại, nếu có
+
         int position = teacherList.indexOf(currentTeacher);
         if (position >= 0) {
             spTeacher.setSelection(position);

@@ -34,7 +34,7 @@ public class RegisterActivity extends AppCompatActivity {
         usersRef = FirebaseDatabase.getInstance().getReference("users");
         dbHelper = new DBHelper(this);
 
-        eName = findViewById(R.id.eName); // Thêm trường tên người dùng
+        eName = findViewById(R.id.eName);
         eEmail = findViewById(R.id.eEmail);
         ePassword = findViewById(R.id.ePassword);
 //        rbAdmin = findViewById(R.id.rbAdmin);
@@ -68,7 +68,7 @@ public class RegisterActivity extends AppCompatActivity {
     private void registerUser(String name, String email, String password, String role) {
         String userId = usersRef.push().getKey();
         HashMap<String, String> userMap = new HashMap<>();
-        userMap.put("name", name); // Lưu tên người dùng vào Firebase
+        userMap.put("name", name);
         userMap.put("email", email);
         userMap.put("password", password);
         userMap.put("role", role);
