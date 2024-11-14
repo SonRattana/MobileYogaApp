@@ -45,13 +45,19 @@ public class RegisterActivity extends AppCompatActivity {
         btnaddteacher.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String name = eName.getText().toString().trim(); // Lấy tên người dùng
+                String name = eName.getText().toString().trim();
                 String email = eEmail.getText().toString().trim();
                 String password = ePassword.getText().toString().trim();
-                String role = rbAdmin.isChecked() ? "Admin" : "Teacher";
+                String role = rbTeacher.isChecked() ? "Teacher" : "Admin";
 
-                if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                    lblMessage.setText("Please fill in all fields!");
+                if (name.isEmpty() && email.isEmpty() && password.isEmpty()) {
+                    Toast.makeText(RegisterActivity.this, "Please fill in all fields!", Toast.LENGTH_SHORT).show();
+                } else if (name.isEmpty()) {
+                    Toast.makeText(RegisterActivity.this, "Please enter a name!", Toast.LENGTH_SHORT).show();
+                } else if (email.isEmpty()) {
+                    Toast.makeText(RegisterActivity.this, "Please enter an email!", Toast.LENGTH_SHORT).show();
+                } else if (password.isEmpty()) {
+                    Toast.makeText(RegisterActivity.this, "Please enter a password!", Toast.LENGTH_SHORT).show();
                 } else {
                     registerUser(name, email, password, role);
                 }

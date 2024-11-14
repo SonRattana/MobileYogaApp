@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     FirebaseDatabase database;
     DatabaseReference yogaClassesRef, categoriesRef;
     ListView lvmain;
-    EditText etTime, etQuantity, etDuration, etDescription;
+    EditText etTime, etQuantity, etDuration, etDescription, etPrice;
     Spinner spinnerType, spDayOfWeek; // Giữ lại Spinner Day of Week
     Button btnSave, btnViewClasses, btnAddTeacher, btnManageUsers, btnViewCustomerBookings, btnDeleteAll, btnManageCategory, btnLogout;
     DBHelper dbHelper;
@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
         etTime = findViewById(R.id.etTime);
         etQuantity = findViewById(R.id.etQuantity);
         etDuration = findViewById(R.id.etDuration);
+        etPrice = findViewById(R.id.etPrice);
         etDescription = findViewById(R.id.etDescription);
         spinnerType = findViewById(R.id.spinnerType);
         btnSave = findViewById(R.id.btnSave);
@@ -137,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    // Hàm xóa toàn bộ dữ liệu từ Firebase (bao gồm cả classes và class instances)
+    // Hàm xóa toàn bộ dữ liệu từ Firebase và SQLite (bao gồm cả classes, class instances, categories và bookings)
     private void deleteAllClasses() {
         // Xóa tất cả các lớp học trên Firebase
         yogaClassesRef.removeValue().addOnCompleteListener(task -> {
@@ -146,13 +147,37 @@ public class MainActivity extends AppCompatActivity {
                 DatabaseReference classInstancesRef = FirebaseDatabase.getInstance().getReference("classinstances");
                 classInstancesRef.removeValue().addOnCompleteListener(instanceTask -> {
                     if (instanceTask.isSuccessful()) {
-                        // Xóa cả lớp học và class instance trong SQLite
-                        SQLiteDatabase db = dbHelper.getWritableDatabase();
-                        db.execSQL("DELETE FROM YogaClass"); // Xóa toàn bộ lớp học
-                        db.execSQL("DELETE FROM ClassInstance"); // Xóa toàn bộ class instance
-                        db.close();
+                        // Xóa categories sau khi đã xóa class instances
+                        DatabaseReference categoriesRef = FirebaseDatabase.getInstance().getReference("categories");
+                        categoriesRef.removeValue().addOnCompleteListener(categoriesTask -> {
+                            if (categoriesTask.isSuccessful()) {
+                                // Xóa bookings sau khi đã xóa categories
+                                DatabaseReference bookingsRef = FirebaseDatabase.getInstance().getReference("bookings");
+                                bookingsRef.removeValue().addOnCompleteListener(bookingsTask -> {
+                                    if (bookingsTask.isSuccessful()) {
+                                        // Xóa dữ liệu trong SQLite sau khi xóa trên Firebase thành công
+                                        SQLiteDatabase db = dbHelper.getWritableDatabase();
+                                        try {
+                                            // Xóa toàn bộ lớp học và class instances
+                                            db.execSQL("DELETE FROM YogaClass"); // Xóa toàn bộ lớp học
+                                            db.execSQL("DELETE FROM ClassInstance"); // Xóa toàn bộ class instance
+                                            db.execSQL("DELETE FROM Categories"); // Xóa toàn bộ categories
+                                            db.execSQL("DELETE FROM Bookings"); // Xóa toàn bộ bookings
 
-                        Toast.makeText(MainActivity.this, "All classes and seasons (instances) deleted successfully from Firebase and SQLite!", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(MainActivity.this, "All classes, seasons (instances), categories, and bookings deleted successfully from Firebase and SQLite!", Toast.LENGTH_SHORT).show();
+                                        } catch (Exception e) {
+                                            Toast.makeText(MainActivity.this, "Failed to delete data from SQLite", Toast.LENGTH_SHORT).show();
+                                        } finally {
+                                            db.close();
+                                        }
+                                    } else {
+                                        Toast.makeText(MainActivity.this, "Failed to delete bookings from Firebase", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            } else {
+                                Toast.makeText(MainActivity.this, "Failed to delete categories from Firebase", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     } else {
                         Toast.makeText(MainActivity.this, "Failed to delete class instances from Firebase", Toast.LENGTH_SHORT).show();
                     }
@@ -162,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
 
 
     // Hàm load danh sách các Category Type từ Firebase và gán vào Spinner
@@ -200,51 +226,69 @@ public class MainActivity extends AppCompatActivity {
         String time = etTime.getText().toString().trim();
         String quantityText = etQuantity.getText().toString().trim();
         String durationText = etDuration.getText().toString().trim();
-        String type = spinnerType.getSelectedItem().toString(); // Get selected type from Spinner
+        String type = spinnerType.getSelectedItem().toString();
         String description = etDescription.getText().toString().trim();
+        String priceText = etPrice.getText().toString().trim();
 
-        // Kiểm tra nếu các trường bắt buộc có rỗng hoặc không hợp lệ
-        if (dayOfWeek.isEmpty() || time.isEmpty() || quantityText.isEmpty() || durationText.isEmpty() || type.isEmpty()) {
+        if (dayOfWeek.isEmpty() || time.isEmpty() || quantityText.isEmpty() || durationText.isEmpty() || type.isEmpty() || priceText.isEmpty()) {
             Toast.makeText(MainActivity.this, "Please fill all required fields!", Toast.LENGTH_SHORT).show();
-            return; // Dừng thực thi nếu có trường không hợp lệ
+            return;
         }
 
-        int quantity = 0;
-        int duration = 0;
+        int quantity;
+        int duration;
+        double price;
 
         try {
             quantity = Integer.parseInt(quantityText);
             duration = Integer.parseInt(durationText);
+            price = Double.parseDouble(priceText);
 
-            if (quantity <= 0 || duration <= 0) {
-                Toast.makeText(MainActivity.this, "Quantity and Duration must be greater than 0!", Toast.LENGTH_SHORT).show();
-                return; // Dừng thực thi nếu quantity hoặc duration không hợp lệ
+            if (quantity <= 0 || duration <= 0 || price <= 0) {
+                Toast.makeText(MainActivity.this, "Quantity, Duration, and Price must be greater than 0!", Toast.LENGTH_SHORT).show();
+                return;
             }
         } catch (NumberFormatException e) {
-            Toast.makeText(MainActivity.this, "Please enter valid numbers for Quantity and Duration!", Toast.LENGTH_SHORT).show();
-            return; // Dừng thực thi nếu có lỗi chuyển đổi số
+            Toast.makeText(MainActivity.this, "Please enter valid numbers for Quantity, Duration, and Price!", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        // Tạo một lớp Yoga mới (Bỏ Teacher và Price)
-        YogaClass yogaClass = new YogaClass(null, dayOfWeek, time, quantity, duration, type, description);
+        YogaClass yogaClass = new YogaClass(null, dayOfWeek, time, quantity, duration, type, price, description);
 
-        // Lưu lớp học vào SQLite trước
-        long result = dbHelper.insertYogaClass(yogaClass);
 
-        if (result != -1) {
-            // Nếu lưu vào SQLite thành công, tiếp tục lưu vào Firebase
-            String key = yogaClassesRef.push().getKey(); // Tạo khóa mới từ Firebase
-            if (key != null) {
-                yogaClass.setId(key); // Đặt ID của lớp học
+        String classDetails = "Day of Week: " + dayOfWeek +
+                "\nTime: " + time +
+                "\nQuantity: " + quantity +
+                "\nDuration: " + duration +
+                "\nType: " + type +
+                "\nPrice: " + price +
+                "\nDescription: " + description;
 
-                yogaClassesRef.child(key).setValue(yogaClass)
-                        .addOnSuccessListener(aVoid -> Toast.makeText(MainActivity.this, "Yoga class saved to SQLite and Firebase!", Toast.LENGTH_SHORT).show())
-                        .addOnFailureListener(e -> Toast.makeText(MainActivity.this, "Failed to save to Firebase", Toast.LENGTH_SHORT).show());
-            }
-        } else {
-            Toast.makeText(MainActivity.this, "Failed to save to SQLite", Toast.LENGTH_SHORT).show();
-        }
+        new AlertDialog.Builder(this)
+                .setTitle("Confirm Yoga Class Details")
+                .setMessage(classDetails)
+                .setPositiveButton("Confirm", (dialog, which) -> {
+
+                    long result = dbHelper.insertYogaClass(yogaClass);
+
+                    if (result != -1) {
+
+                        String key = yogaClassesRef.push().getKey();
+                        if (key != null) {
+                            yogaClass.setId(key);
+                            yogaClassesRef.child(key).setValue(yogaClass)
+                                    .addOnSuccessListener(aVoid -> Toast.makeText(MainActivity.this, "Yoga class saved to SQLite and Firebase!", Toast.LENGTH_SHORT).show())
+                                    .addOnFailureListener(e -> Toast.makeText(MainActivity.this, "Failed to save to Firebase", Toast.LENGTH_SHORT).show());
+                        }
+                    } else {
+                        Toast.makeText(MainActivity.this, "Failed to save to SQLite", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
     }
+
+
 
     // Hàm load danh sách lớp Yoga từ Firebase
     private void loadYogaClasses() {
@@ -264,6 +308,7 @@ public class MainActivity extends AppCompatActivity {
                                 Integer.parseInt(r.get("quantity").toString()),
                                 Integer.parseInt(r.get("duration").toString()),
                                 r.get("type").toString(),
+                                Double.parseDouble(r.get("price").toString()),
                                 r.get("description").toString()
                         );
 

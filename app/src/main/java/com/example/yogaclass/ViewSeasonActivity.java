@@ -1,10 +1,16 @@
 package com.example.yogaclass;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -25,8 +31,10 @@ public class ViewSeasonActivity extends AppCompatActivity {
     ListView lvSeason;
     ClassInstanceAdapter adapter;
     ArrayList<ClassInstance> instanceList;
+    ArrayList<ClassInstance> originalInstanceList;
     DatabaseReference classRef;
     String yogaClassId;
+    EditText etSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,32 +42,75 @@ public class ViewSeasonActivity extends AppCompatActivity {
         setContentView(R.layout.activity_view_season);
 
         lvSeason = findViewById(R.id.lvSeason);
+        etSearch = findViewById(R.id.etSearch);
         dbHelper = new DBHelper(this);
         classRef = FirebaseDatabase.getInstance().getReference("classinstances");
         instanceList = new ArrayList<>();
+        originalInstanceList = new ArrayList<>();
 
         // Get the yogaClassId passed from the previous activity
         yogaClassId = getIntent().getStringExtra("YOGA_CLASS_ID");
 
-        // Check if yogaClassId is null
         if (yogaClassId == null) {
             Toast.makeText(this, "Yoga Class ID is missing!", Toast.LENGTH_SHORT).show();
-            finish(); // Exit the activity if the ID is not provided
-            return; // Ensure the rest of the onCreate method does not execute
+            finish();
+            return;
         }
 
-        // Initialize adapter and set it to the ListView
+        loadClassInstances();
+
         adapter = new ClassInstanceAdapter(this, instanceList, dbHelper, classRef, "Admin");
         lvSeason.setAdapter(adapter);
 
-        // Đồng bộ hóa dữ liệu từ Firebase về SQLite và sau đó tải dữ liệu từ SQLite
-        syncDataFromFirebase();
+
+
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterInstances(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+    }
+
+    // Kiểm tra trạng thái kết nối mạng
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return networkInfo != null && networkInfo.isConnected();
+    }
+
+    private void filterInstances(String keyword) {
+        if (keyword.isEmpty()) {
+            adapter.updateData(originalInstanceList);
+            return;
+        }
+
+        ArrayList<ClassInstance> filteredList = new ArrayList<>();
+        keyword = keyword.toLowerCase();
+
+        for (ClassInstance instance : originalInstanceList) {
+            boolean matchesTeacher = instance.getTeacher().toLowerCase().contains(keyword);
+            boolean matchesDate = instance.getDate().contains(keyword);
+
+            if (matchesTeacher || matchesDate) {
+                filteredList.add(instance);
+            }
+        }
+
+        adapter.updateData(filteredList);
     }
 
     private void loadClassInstances() {
-        Log.d("ViewSeasonActivity", "YogaClassId: " + yogaClassId); // Log the yogaClassId
+        Log.d("ViewSeasonActivity", "YogaClassId: " + yogaClassId);
         Cursor cursor = dbHelper.getClassInstancesByYogaClassId(yogaClassId);
         instanceList.clear();
+        originalInstanceList.clear();
 
         if (cursor != null && cursor.moveToFirst()) {
             do {
@@ -72,59 +123,47 @@ public class ViewSeasonActivity extends AppCompatActivity {
 
                 ClassInstance instance = new ClassInstance(instanceId, yogaClassId, date, teacher, comments, price);
                 instanceList.add(instance);
+                originalInstanceList.add(instance);
             } while (cursor.moveToNext());
         }
 
         if (cursor != null) {
             cursor.close();
         }
-
-        adapter.notifyDataSetChanged();
     }
 
     private void syncDataFromFirebase() {
         classRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // Mở kết nối với SQLite
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
-                db.execSQL("DELETE FROM ClassInstance"); // Xóa dữ liệu cũ trước khi thêm dữ liệu mới
-
-                // Duyệt qua các classinstances
+                db.execSQL("DELETE FROM ClassInstance"); // Xóa dữ liệu cũ trong SQLite
                 for (DataSnapshot classInstanceSnapshot : dataSnapshot.getChildren()) {
-                    String yogaClassId = classInstanceSnapshot.getKey(); // Đây là yogaClassId
-
+                    String yogaClassId = classInstanceSnapshot.getKey();
                     for (DataSnapshot snapshot : classInstanceSnapshot.getChildren()) {
-                        String id = snapshot.getKey(); // Instance ID
+                        String id = snapshot.getKey();
                         String date = snapshot.child("date").getValue(String.class);
                         String teacher = snapshot.child("teacher").getValue(String.class);
                         String additionalComments = snapshot.child("additionalComments").getValue(String.class);
-
-                        // Kiểm tra nếu price là null, gán giá trị mặc định là 0.0
                         Double priceValue = snapshot.child("price").getValue(Double.class);
                         double price = priceValue != null ? priceValue : 0.0;
-
-                        // Chỉ thêm vào SQLite nếu yogaClassId, date và teacher không bị null
                         if (yogaClassId != null && date != null && teacher != null) {
                             ContentValues values = new ContentValues();
                             values.put("id", id);
-                            values.put("yogaClassId", yogaClassId); // Sử dụng yogaClassId từ snapshot cha
+                            values.put("yogaClassId", yogaClassId);
                             values.put("date", date);
                             values.put("teacher", teacher);
                             values.put("additionalComments", additionalComments);
                             values.put("price", price);
 
-                            db.insert("ClassInstance", null, values);
+                            db.insert("ClassInstance", null, values); // Lưu vào SQLite
                         } else {
                             Log.e("ViewSeasonActivity", "Missing required fields for class instance");
                         }
                     }
                 }
-
-                db.close(); // Đóng kết nối SQLite
-
-                // Sau khi đồng bộ, tải dữ liệu từ SQLite để hiển thị
-                loadClassInstances();
+                db.close();
+                loadClassInstances(); // Sau khi đồng bộ, tải dữ liệu từ SQLite để hiển thị
             }
 
             @Override
@@ -133,5 +172,4 @@ public class ViewSeasonActivity extends AppCompatActivity {
             }
         });
     }
-
 }

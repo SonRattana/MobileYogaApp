@@ -15,4 +15,6 @@
         <item>Aerial Yoga</item>
         <item>Family Yoga</item>
     </string-array>
+    <string name="filter_by_type">Filter by Type</string>
+    <string name="filter_by_day">Filter by Day of the Week</string>
 </resources>

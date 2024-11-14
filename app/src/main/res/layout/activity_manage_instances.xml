@@ -29,19 +29,19 @@
         android:inputType="textMultiLine" />
 
     <!-- Text Input for Price -->
-    <EditText
-        android:id="@+id/etPrice"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter price (e.g., 15.99)"
-        android:inputType="numberDecimal" />
+ <TextView
+    android:id="@+id/tvPrice"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Price: "
+    android:textSize="16sp" />
 
     <!-- Save Button -->
     <Button
         android:id="@+id/btnSaveInstance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save Class Instance"
+        android:text="Save Sessions"
         android:backgroundTint="@color/design_default_color_primary"
         android:textColor="@android:color/white"
         android:layout_marginTop="16dp" />
@@ -49,7 +49,7 @@
         android:id="@+id/btnViewSeason"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="View Seasons" />
+        android:text="View Sessions" />
 
 
 <!--    &lt;!&ndash; List View to show saved class instances with Edit/Delete &ndash;&gt;-->

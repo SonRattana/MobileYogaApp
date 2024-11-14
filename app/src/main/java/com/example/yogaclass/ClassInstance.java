@@ -1,20 +1,16 @@
 package com.example.yogaclass;
 
 public class ClassInstance {
-    private String instanceId;
+    private String id;
     private String yogaClassId;
     private String date;
     private String teacher;
     private String additionalComments;
-    private double price; // Thêm trường price
+    private double price;
 
-    // Constructor mặc định cho Firebase
-    public ClassInstance() {
-    }
-
-    // Constructor đầy đủ với 6 tham số bao gồm cả price
-    public ClassInstance(String instanceId, String yogaClassId, String date, String teacher, String additionalComments, double price) {
-        this.instanceId = instanceId;
+    // Constructor đầy đủ với tất cả các thuộc tính
+    public ClassInstance(String id, String yogaClassId, String date, String teacher, String additionalComments, double price) {
+        this.id = id;
         this.yogaClassId = yogaClassId;
         this.date = date;
         this.teacher = teacher;
@@ -22,13 +18,13 @@ public class ClassInstance {
         this.price = price;
     }
 
-    // Các getter và setter cho tất cả các trường
+    // Getter và Setter cho từng thuộc tính
     public String getInstanceId() {
-        return instanceId;
+        return id;
     }
 
-    public void setInstanceId(String instanceId) {
-        this.instanceId = instanceId;
+    public void setInstanceId(String id) {
+        this.id = id;
     }
 
     public String getYogaClassId() {
@@ -71,4 +67,3 @@ public class ClassInstance {
         this.price = price;
     }
 }
-

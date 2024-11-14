@@ -27,10 +27,5 @@
         android:layout_height="wrap_content"
         android:hint="Comments" />
 
-    <EditText
-        android:id="@+id/etPrice"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Price"
-        android:inputType="numberDecimal" />
+
 </LinearLayout>

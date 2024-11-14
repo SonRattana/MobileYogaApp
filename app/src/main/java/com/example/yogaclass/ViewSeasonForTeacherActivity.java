@@ -15,6 +15,7 @@ public class ViewSeasonForTeacherActivity extends AppCompatActivity {
     DBHelper dbHelper;
     ListView lvSeason;
     ArrayList<ClassInstance> instanceList;
+    ArrayList<ClassInstance> originalInstanceList; // Danh sách gốc
     ClassInstanceAdapter adapter;
     EditText etSearchDate;
 
@@ -24,16 +25,16 @@ public class ViewSeasonForTeacherActivity extends AppCompatActivity {
         setContentView(R.layout.activity_view_season_for_teacher);
 
         lvSeason = findViewById(R.id.lvSeason);
-//        etSearchTeacher = findViewById(R.id.etSearchTeacher);
         etSearchDate = findViewById(R.id.etSearchDate);
         dbHelper = new DBHelper(this);
         instanceList = new ArrayList<>();
+        originalInstanceList = new ArrayList<>(); // Khởi tạo danh sách gốc
 
         Intent intent = getIntent();
         String teacherName = intent.getStringExtra("teacherName");
 
         // Initialize the adapter and set it to the ListView
-        adapter = new ClassInstanceAdapter(this, instanceList, dbHelper, null, "Teacher");  // Không cần Firebase reference
+        adapter = new ClassInstanceAdapter(this, instanceList, dbHelper, null, "Teacher");
         lvSeason.setAdapter(adapter);
 
         // Load class instances filtered by the teacher name
@@ -44,8 +45,9 @@ public class ViewSeasonForTeacherActivity extends AppCompatActivity {
     }
 
     private void loadClassInstances(String teacherName) {
-        Cursor cursor = dbHelper.getClassInstancesByTeacherName(teacherName);  // Lọc các instance theo tên giáo viên
+        Cursor cursor = dbHelper.getClassInstancesByTeacherName(teacherName);
         instanceList.clear();
+        originalInstanceList.clear(); // Xóa danh sách gốc trước khi tải lại
 
         if (cursor != null && cursor.moveToFirst()) {
             do {
@@ -58,6 +60,7 @@ public class ViewSeasonForTeacherActivity extends AppCompatActivity {
 
                 ClassInstance instance = new ClassInstance(instanceId, yogaClassId, date, teacher, comments, price);
                 instanceList.add(instance);
+                originalInstanceList.add(instance); // Lưu vào danh sách gốc
             } while (cursor.moveToNext());
         }
 
@@ -68,9 +71,7 @@ public class ViewSeasonForTeacherActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
-
     private void setupSearchFilters() {
-        // Xóa các phần liên quan đến etSearchTeacher nếu không còn sử dụng nó
         etSearchDate.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -83,22 +84,17 @@ public class ViewSeasonForTeacherActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {}
         });
-
-    }
-
-    private void filterByTeacher(String teacherName) {
-        ArrayList<ClassInstance> filteredList = new ArrayList<>();
-        for (ClassInstance instance : instanceList) {
-            if (instance.getTeacher().toLowerCase().contains(teacherName.toLowerCase())) {
-                filteredList.add(instance);
-            }
-        }
-        adapter.updateList(filteredList);
     }
 
     private void filterByDate(String date) {
+
+        if (date.isEmpty()) {
+            adapter.updateList(originalInstanceList);
+            return;
+        }
+
         ArrayList<ClassInstance> filteredList = new ArrayList<>();
-        for (ClassInstance instance : instanceList) {
+        for (ClassInstance instance : originalInstanceList) {
             if (instance.getDate().contains(date)) {
                 filteredList.add(instance);
             }

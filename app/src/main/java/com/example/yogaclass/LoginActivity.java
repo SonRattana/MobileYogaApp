@@ -47,7 +47,6 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String email = eEmail.getText().toString().trim();
                 String password = ePassword.getText().toString().trim();
-
                 if (email.isEmpty() || password.isEmpty()) {
                     lblMessage.setText("Please fill in all fields!");
                 } else {

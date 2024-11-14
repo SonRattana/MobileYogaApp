@@ -32,7 +32,7 @@ public class UserAdapter extends ArrayAdapter<User> {
         super(context, 0, users);
         this.context = context;
         this.users = users;
-        this.userIds = userIds;  // Lưu danh sách ID của người dùng
+        this.userIds = userIds;
         this.dbHelper = dbHelper;
         this.usersRef = FirebaseDatabase.getInstance().getReference("users");
     }
@@ -70,15 +70,14 @@ public class UserAdapter extends ArrayAdapter<User> {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Edit User Name");
 
-        // Tạo một EditText để nhập tên mới
         final EditText input = new EditText(context);
-        input.setText(user.getName());  // Đặt tên hiện tại trong EditText
+        input.setText(user.getName());
         builder.setView(input);
 
         builder.setPositiveButton("Update", (dialog, which) -> {
             String newName = input.getText().toString();
             if (!newName.isEmpty()) {
-                updateUser(user, newName, userId);  // Gọi hàm cập nhật với userId
+                updateUser(user, newName, userId);
             } else {
                 Toast.makeText(context, "Please enter a valid name!", Toast.LENGTH_SHORT).show();
             }
@@ -89,22 +88,21 @@ public class UserAdapter extends ArrayAdapter<User> {
         builder.show();
     }
 
-    // Cập nhật tên người dùng trong Firebase và SQLite dựa trên userId
+
     private void updateUser(User user, String newName, String userId) {
-        // Cập nhật tên trong SQLite
+
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         db.execSQL("UPDATE Users SET name = ? WHERE id = ?", new Object[]{newName, user.getId()});
 
-        // Cập nhật tên trong Firebase dựa trên userId (chuỗi ngẫu nhiên)
         usersRef.child(userId).child("name").setValue(newName)
                 .addOnSuccessListener(aVoid -> {
-                    // Cập nhật thành công
+
                     Toast.makeText(context, "User name updated successfully!", Toast.LENGTH_SHORT).show();
-                    user.setName(newName);  // Cập nhật tên trong danh sách
-                    notifyDataSetChanged(); // Làm mới danh sách sau khi cập nhật
+                    user.setName(newName);
+                    notifyDataSetChanged();
                 })
                 .addOnFailureListener(e -> {
-                    // Cập nhật thất bại
+
                     Toast.makeText(context, "Failed to update user name.", Toast.LENGTH_SHORT).show();
                 });
     }

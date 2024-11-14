@@ -1,5 +1,6 @@
 package com.example.yogaclass;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -24,7 +25,7 @@ public class CategoryManagementActivity extends AppCompatActivity {
     private EditText etCategoryName;
     private Button btnAddCategory, btnUpdateCategory, btnDeleteCategory;
     private ListView lvCategories;
-
+    private DBHelper dbHelper;
     private FirebaseDatabase database;
     private DatabaseReference categoriesRef;
     private ArrayAdapter<String> categoryAdapter;
@@ -42,7 +43,7 @@ public class CategoryManagementActivity extends AppCompatActivity {
         btnUpdateCategory = findViewById(R.id.btnUpdateCategory);
         btnDeleteCategory = findViewById(R.id.btnDeleteCategory);
         lvCategories = findViewById(R.id.lvCategories);
-
+        dbHelper = new DBHelper(this);
         // Firebase reference
         database = FirebaseDatabase.getInstance();
         categoriesRef = database.getReference("categories");
@@ -54,7 +55,7 @@ public class CategoryManagementActivity extends AppCompatActivity {
 
         // Load danh sách category từ Firebase
         loadCategories();
-
+        loadCategoriesFromSQLite();
         // Xử lý sự kiện khi click vào một category từ ListView
         lvCategories.setOnItemClickListener((parent, view, position, id) -> {
             selectedCategory = categoryList.get(position);
@@ -71,14 +72,17 @@ public class CategoryManagementActivity extends AppCompatActivity {
         btnDeleteCategory.setOnClickListener(v -> deleteCategory());
     }
 
-    // Thêm danh mục mới vào Firebase
     private void addCategory() {
         String categoryName = etCategoryName.getText().toString().trim();
         if (!categoryName.isEmpty()) {
+
             categoriesRef.push().setValue(categoryName)
                     .addOnSuccessListener(aVoid -> {
+
+                        dbHelper.insertCategory(categoryName);
                         Toast.makeText(CategoryManagementActivity.this, "Category added!", Toast.LENGTH_SHORT).show();
                         etCategoryName.setText("");
+                        loadCategoriesFromSQLite();
                     })
                     .addOnFailureListener(e -> Toast.makeText(CategoryManagementActivity.this, "Failed to add category", Toast.LENGTH_SHORT).show());
         } else {
@@ -86,7 +90,6 @@ public class CategoryManagementActivity extends AppCompatActivity {
         }
     }
 
-    // Cập nhật danh mục hiện tại trong Firebase
     private void updateCategory() {
         String newCategoryName = etCategoryName.getText().toString().trim();
         if (selectedCategory != null && !newCategoryName.isEmpty()) {
@@ -97,13 +100,14 @@ public class CategoryManagementActivity extends AppCompatActivity {
                             for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                                 snapshot.getRef().setValue(newCategoryName)
                                         .addOnSuccessListener(aVoid -> {
+                                            dbHelper.updateCategory(selectedCategory, newCategoryName);
                                             Toast.makeText(CategoryManagementActivity.this, "Category updated!", Toast.LENGTH_SHORT).show();
                                             etCategoryName.setText("");
-                                            selectedCategory = null; // Clear selection
+                                            selectedCategory = null;
+                                            loadCategoriesFromSQLite();
                                         });
                             }
                         }
-
                         @Override
                         public void onCancelled(@NonNull DatabaseError databaseError) {
                             Toast.makeText(CategoryManagementActivity.this, "Update failed", Toast.LENGTH_SHORT).show();
@@ -114,7 +118,6 @@ public class CategoryManagementActivity extends AppCompatActivity {
         }
     }
 
-    // Xóa danh mục từ Firebase
     private void deleteCategory() {
         if (selectedCategory != null) {
             categoriesRef.orderByValue().equalTo(selectedCategory)
@@ -124,9 +127,12 @@ public class CategoryManagementActivity extends AppCompatActivity {
                             for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                                 snapshot.getRef().removeValue()
                                         .addOnSuccessListener(aVoid -> {
+
+                                            dbHelper.deleteCategory(selectedCategory);
                                             Toast.makeText(CategoryManagementActivity.this, "Category deleted!", Toast.LENGTH_SHORT).show();
                                             etCategoryName.setText("");
-                                            selectedCategory = null; // Clear selection
+                                            selectedCategory = null;
+                                            loadCategoriesFromSQLite();
                                         });
                             }
                         }
@@ -141,23 +147,37 @@ public class CategoryManagementActivity extends AppCompatActivity {
         }
     }
 
-    // Load danh sách các loại từ Firebase
+
     private void loadCategories() {
-        categoriesRef.addValueEventListener(new ValueEventListener() {
+        dbHelper.deleteAllCategories();
+        categoriesRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                categoryList.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     String category = snapshot.getValue(String.class);
-                    categoryList.add(category);
+                    if (category != null) {
+                        dbHelper.insertCategory(category);
+                    }
                 }
-                categoryAdapter.notifyDataSetChanged();
+                loadCategoriesFromSQLite();
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Toast.makeText(CategoryManagementActivity.this, "Failed to load categories", Toast.LENGTH_SHORT).show();
             }
         });
     }
+    private void loadCategoriesFromSQLite() {
+        Cursor cursor = dbHelper.getAllCategories();
+        categoryList.clear();
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                String category = cursor.getString(0);
+                categoryList.add(category);
+            }
+            cursor.close();
+        }
+        categoryAdapter.notifyDataSetChanged();
+    }
+
 }

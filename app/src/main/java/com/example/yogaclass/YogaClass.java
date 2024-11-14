@@ -7,6 +7,7 @@ public class YogaClass {
     private int quantity;
     private int duration;
     private String type;
+    private double price;
     private String description;
 
     // Constructor không đối số (no-argument constructor)
@@ -15,13 +16,15 @@ public class YogaClass {
     }
 
     // Constructor có đối số để khởi tạo đối tượng với dữ liệu
-    public YogaClass(String id, String dayOfWeek, String time, int quantity, int duration, String type, String description) {
+    public YogaClass(String id, String dayOfWeek, String time, int quantity, int duration, String type, double price, String description) {
         this.id = id;
         this.dayOfWeek = dayOfWeek;
         this.time = time;
         this.quantity = quantity;
         this.duration = duration;
         this.type = type;
+        this.price = price;
+
         this.description = description;
     }
 
@@ -73,6 +76,13 @@ public class YogaClass {
     public void setType(String type) {
         this.type = type;
     }
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
 
     public String getDescription() {
         return description;
@@ -81,4 +91,5 @@ public class YogaClass {
     public void setDescription(String description) {
         this.description = description;
     }
+
 }

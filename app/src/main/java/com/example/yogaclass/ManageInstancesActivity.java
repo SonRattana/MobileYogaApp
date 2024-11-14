@@ -11,6 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -37,10 +38,10 @@ import android.widget.ArrayAdapter;
 public class ManageInstancesActivity extends AppCompatActivity {
 
     DBHelper dbHelper;
-    EditText etDate, etComments, etPrice;
+    EditText etDate, etComments;
     Spinner spTeacher;
     Button btnSaveInstance;
-
+    TextView tvPrice;
     String yogaClassId;
     DatabaseReference classRef;
     String selectedDayOfWeek;
@@ -59,18 +60,24 @@ public class ManageInstancesActivity extends AppCompatActivity {
         etDate = findViewById(R.id.etDate);
         spTeacher = findViewById(R.id.spTeacher);
         etComments = findViewById(R.id.etComments);
-        etPrice = findViewById(R.id.etPrice);
+        tvPrice = findViewById(R.id.tvPrice);
         btnSaveInstance = findViewById(R.id.btnSaveInstance);
 
 
         // Lấy yogaClassId và dayOfWeek từ lớp Yoga
         yogaClassId = getIntent().getStringExtra("YOGA_CLASS_ID");
         selectedDayOfWeek = getIntent().getStringExtra("DAY_OF_WEEK");
+        double price = getIntent().getDoubleExtra("PRICE",0.0);
+
+
 
         if (yogaClassId == null) {
             Toast.makeText(this, "Invalid Yoga Class ID", Toast.LENGTH_SHORT).show();
             finish();
         }
+
+        tvPrice.setText(String.format(Locale.getDefault(), "Price: $%.2f", price));
+
         Button btnViewSeason = findViewById(R.id.btnViewSeason);
 
         btnViewSeason.setOnClickListener(v -> {
@@ -128,9 +135,6 @@ public class ManageInstancesActivity extends AppCompatActivity {
     }
 
 
-
-
-
     // Hàm kiểm tra xem ngày chọn có trùng với dayOfWeek của lớp học hay không
     private boolean isCorrectDayOfWeek(String selectedDayOfWeek, String selectedDate) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
@@ -154,10 +158,6 @@ public class ManageInstancesActivity extends AppCompatActivity {
             return false;  // Trả về false nếu có lỗi xảy ra trong quá trình parse ngày
         }
     }
-
-
-
-
 
     // Hàm chuyển đổi giá trị từ Calendar.DAY_OF_WEEK thành dạng chuỗi (ví dụ: "Monday", "Tuesday")
     private String mapDayOfWeek(String dayOfWeek) {
@@ -186,20 +186,19 @@ public class ManageInstancesActivity extends AppCompatActivity {
         String date = etDate.getText().toString();
         String teacher = spTeacher.getSelectedItem().toString();
         String comments = etComments.getText().toString();
-        String priceText = etPrice.getText().toString();
 
-        if (date.isEmpty() || teacher.isEmpty() || priceText.isEmpty()) {
+        if (date.isEmpty() || teacher.isEmpty()) {
             Toast.makeText(this, "Please fill in all information", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Kiểm tra xem ngày được chọn có khớp với dayOfWeek không
         if (!isCorrectDayOfWeek(selectedDayOfWeek, date)) {
             Toast.makeText(this, "Selected date does not match the required day of the week: " + selectedDayOfWeek, Toast.LENGTH_SHORT).show();
             return;
         }
 
-        double price = Double.parseDouble(priceText);
+        // Lấy giá trị của price từ intent (giá trị đã truyền vào khi mở activity này)
+        double price = getIntent().getDoubleExtra("PRICE", 0.0);
 
         // Tạo ID mới cho Firebase
         String instanceId = classRef.push().getKey();
@@ -210,7 +209,6 @@ public class ManageInstancesActivity extends AppCompatActivity {
         if (result != -1) {
             syncDataToFirebase(instanceId, yogaClassId, date, teacher, comments, price);
             Toast.makeText(this, "Class instance added successfully!", Toast.LENGTH_SHORT).show();
-            // Chuyển hướng sau khi thêm thành công
             Intent intent = new Intent(ManageInstancesActivity.this, ViewSeasonActivity.class);
             startActivity(intent);
             finish();
@@ -218,18 +216,16 @@ public class ManageInstancesActivity extends AppCompatActivity {
             Toast.makeText(this, "Failed to add class instance to SQLite", Toast.LENGTH_SHORT).show();
         }
     }
+
     private void updateClassInstance() {
         String date = etDate.getText().toString();
         String teacher = spTeacher.getSelectedItem().toString();
         String comments = etComments.getText().toString();
-        String priceText = etPrice.getText().toString();
 
-        if (date.isEmpty() || teacher.isEmpty() || priceText.isEmpty()) {
+        if (date.isEmpty() || teacher.isEmpty()) {
             Toast.makeText(this, "Please fill in all information", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        double price = Double.parseDouble(priceText);
 
         // Lấy ID của instance hiện tại (instance mà bạn đang muốn cập nhật)
         String instanceId = getIntent().getStringExtra("INSTANCE_ID");
@@ -237,6 +233,9 @@ public class ManageInstancesActivity extends AppCompatActivity {
             Toast.makeText(this, "No instance ID provided", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // Lấy giá từ YogaClass thay vì để người dùng nhập
+        double price = dbHelper.getYogaClassPriceById(yogaClassId);
 
         // Cập nhật buổi học vào SQLite
         int result = dbHelper.updateClassInstance(instanceId, date, teacher, comments, price);
@@ -254,6 +253,7 @@ public class ManageInstancesActivity extends AppCompatActivity {
             Toast.makeText(this, "Failed to update class instance in SQLite", Toast.LENGTH_SHORT).show();
         }
     }
+
     // Load the class instances from SQLite
 
     private void loadClassInstances() {
@@ -313,45 +313,14 @@ public class ManageInstancesActivity extends AppCompatActivity {
     }
     // Load teachers into Spinner
     private void loadTeachersIntoSpinner() {
-        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
-
-        // Tạo một ArrayList để lưu tên giáo viên
-        ArrayList<String> teacherList = new ArrayList<>();
-
-        // Query Firebase để lấy danh sách người dùng có vai trò là "Teacher"
-        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // Xóa danh sách hiện tại
-                teacherList.clear();
-
-                // Duyệt qua tất cả các user trong Firebase
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    String role = snapshot.child("role").getValue(String.class);
-
-                    // Chỉ thêm những user có vai trò là "Teacher"
-                    if ("Teacher".equals(role)) {
-                        String teacherName = snapshot.child("name").getValue(String.class);
-                        teacherList.add(teacherName);
-                    }
-                }
-
-                // Nếu không có giáo viên nào, thêm tùy chọn trống
-                if (teacherList.isEmpty()) {
-                    teacherList.add("No Teachers Available");
-                }
-
-                // Gán danh sách giáo viên vào Spinner
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(ManageInstancesActivity.this, android.R.layout.simple_spinner_item, teacherList);
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spTeacher.setAdapter(adapter);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Toast.makeText(ManageInstancesActivity.this, "Failed to load teachers: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+        ArrayList<String> teacherList = dbHelper.getAllTeachersFromSQLite();
+        if (teacherList.isEmpty()) {
+            teacherList.add("No Teachers Available");
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(ManageInstancesActivity.this, android.R.layout.simple_spinner_item, teacherList);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spTeacher.setAdapter(adapter);
     }
+
 
 }

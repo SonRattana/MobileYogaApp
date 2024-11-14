@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -17,11 +19,14 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
@@ -33,7 +38,7 @@ public class DisplayClassesActivity extends AppCompatActivity {
     ArrayList<YogaClass> yogaClasses;
     YogaClassAdapter adapter;
     EditText etSearch;
-    Spinner spinnerFilterType;
+    Spinner spinnerFilterType, spinnerFilterDay;
     private DatabaseReference yogaClassesRef;
 
     @Override
@@ -44,7 +49,8 @@ public class DisplayClassesActivity extends AppCompatActivity {
         // Initialize UI components
         classListView = findViewById(R.id.classListView);
         etSearch = findViewById(R.id.etSearch);
-        spinnerFilterType = findViewById(R.id.spinnerFilterType);  // Thêm spinner lọc theo Type
+        spinnerFilterType = findViewById(R.id.spinnerFilterType);
+        spinnerFilterDay = findViewById(R.id.spinnerFilterDay);
         dbHelper = new DBHelper(this);
         yogaClasses = new ArrayList<>();
 
@@ -52,9 +58,13 @@ public class DisplayClassesActivity extends AppCompatActivity {
         yogaClassesRef = FirebaseDatabase.getInstance().getReference("yogaclasses");
 
         // Sync data from Firebase to SQLite
-        syncDataFromFirebase();
+        if (isNetworkAvailable()) {
+            syncDataFromFirebase();
+        } else {
+            loadDataFromSQLite();
+        }
 
-        // Load data from SQLite
+        // Load classes from SQLite
         loadClasses();
 
         // Implement search functionality
@@ -64,60 +74,111 @@ public class DisplayClassesActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                adapter.filter(s.toString());  // Tìm kiếm theo từ khóa nhập vào
+                filterByTypeAndDay();
             }
 
             @Override
             public void afterTextChanged(Editable s) {}
         });
 
-        // Lọc theo Type khi người dùng chọn từ spinner
+
+        // Setup filters for Type and Day of the Week
         spinnerFilterType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedType = (String) parent.getItemAtPosition(position);
-                filterByType(selectedType);  // Gọi hàm lọc theo Type
+                filterByTypeAndDay();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        // Khi người dùng nhấp vào một lớp học, chuyển đến trang quản lý instances (ManageInstancesActivity)
+        spinnerFilterDay.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                filterByTypeAndDay();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        // When a user clicks on a class, go to ManageInstancesActivity
         classListView.setOnItemClickListener((parent, view, position, id) -> {
             YogaClass selectedClass = yogaClasses.get(position);
 
-            // Kiểm tra nếu yogaClassId hoặc dayOfWeek bị null
             if (selectedClass.getId() == null || selectedClass.getDayOfWeek() == null) {
                 Log.e("DisplayClassesActivity", "Class ID or Day of Week is null for class at position: " + position);
                 Toast.makeText(DisplayClassesActivity.this, "Class ID or Day of Week is missing", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Log để kiểm tra dữ liệu trước khi truyền qua Intent
-            Log.d("DisplayClassesActivity", "Class ID: " + selectedClass.getId() + ", Day of Week: " + selectedClass.getDayOfWeek());
-
-            // Truyền class ID và dayOfWeek qua Intent
             Intent intent = new Intent(DisplayClassesActivity.this, ManageInstancesActivity.class);
             intent.putExtra("YOGA_CLASS_ID", selectedClass.getId());
             intent.putExtra("DAY_OF_WEEK", selectedClass.getDayOfWeek());
+            intent.putExtra("PRICE", selectedClass.getPrice());
             startActivity(intent);
         });
     }
 
-    // Sync data from Firebase to SQLite
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = ContextCompat.getSystemService(this, ConnectivityManager.class);
+        if (connectivityManager != null) {
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        }
+        return false;
+    }
+
+    // Load classes from SQLite when offline
+    private void loadDataFromSQLite() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM YogaClass", null);
+
+        yogaClasses.clear();
+
+        if (cursor.moveToFirst()) {
+            do {
+                int classId = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
+                String dayOfWeek = cursor.getString(cursor.getColumnIndexOrThrow("dayOfWeek"));
+                String time = cursor.getString(cursor.getColumnIndexOrThrow("time"));
+                int quantity = cursor.getInt(cursor.getColumnIndexOrThrow("quantity"));
+                int duration = cursor.getInt(cursor.getColumnIndexOrThrow("duration"));
+                String type = cursor.getString(cursor.getColumnIndexOrThrow("type"));
+                double price = cursor.getDouble(cursor.getColumnIndexOrThrow("price"));
+                String description = cursor.getString(cursor.getColumnIndexOrThrow("description"));
+
+                YogaClass yogaClass = new YogaClass(
+                        String.valueOf(classId),
+                        dayOfWeek,
+                        time,
+                        quantity,
+                        duration,
+                        type,
+                        price,
+                        description
+                );
+                yogaClasses.add(yogaClass);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+
+        setupAdapter();
+        loadFilterTypes();
+        loadFilterDays();
+    }
+
     private void syncDataFromFirebase() {
-        yogaClassesRef.addValueEventListener(new ValueEventListener() {
+        yogaClassesRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
-                db.execSQL("DELETE FROM YogaClass");  // Clear old data in SQLite
+                db.execSQL("DELETE FROM YogaClass");
 
                 yogaClasses.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     YogaClass yogaClass = snapshot.getValue(YogaClass.class);
 
-                    // Save class to SQLite
                     ContentValues values = new ContentValues();
                     values.put("dayOfWeek", Objects.requireNonNull(yogaClass).getDayOfWeek());
                     values.put("time", yogaClass.getTime());
@@ -128,12 +189,12 @@ public class DisplayClassesActivity extends AppCompatActivity {
 
                     db.insert("YogaClass", null, values);
 
-                    // Add class to display list
                     yogaClasses.add(yogaClass);
                 }
 
-                setupAdapter();  // Set up Adapter to display the classes
-                loadFilterTypes();  // Load các type để hiển thị trong spinner
+                setupAdapter();
+                loadFilterTypes();
+                loadFilterDays();
             }
 
             @Override
@@ -143,14 +204,14 @@ public class DisplayClassesActivity extends AppCompatActivity {
         });
     }
 
-    // Load các Type cho Spinner Filter từ dữ liệu lớp học đã đồng bộ
+    // Load Types for Spinner Filter from class data
     private void loadFilterTypes() {
         ArrayList<String> types = new ArrayList<>();
-        types.add("All");  // Lựa chọn để hiển thị tất cả các lớp
+        types.add("All");
 
         for (YogaClass yogaClass : yogaClasses) {
             if (!types.contains(yogaClass.getType())) {
-                types.add(yogaClass.getType());  // Thêm type vào danh sách nếu chưa có
+                types.add(yogaClass.getType());
             }
         }
 
@@ -159,26 +220,45 @@ public class DisplayClassesActivity extends AppCompatActivity {
         spinnerFilterType.setAdapter(typeAdapter);
     }
 
-    // Lọc các lớp theo Type được chọn
-    private void filterByType(String selectedType) {
+    // Load Days for Spinner Filter from class data
+    private void loadFilterDays() {
+        ArrayList<String> days = new ArrayList<>();
+        days.add("All");  // Option to show all days
+        days.add("Monday");
+        days.add("Tuesday");
+        days.add("Wednesday");
+        days.add("Thursday");
+        days.add("Friday");
+        days.add("Saturday");
+        days.add("Sunday");
+
+        ArrayAdapter<String> dayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, days);
+        dayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerFilterDay.setAdapter(dayAdapter);
+    }
+
+    // Filter classes by Type and Day of the Week
+    private void filterByTypeAndDay() {
+        String selectedType = spinnerFilterType.getSelectedItem().toString();
+        String selectedDay = spinnerFilterDay.getSelectedItem().toString();
+        String searchQuery = etSearch.getText().toString().toLowerCase();
+
         ArrayList<YogaClass> filteredList = new ArrayList<>();
 
-        if (selectedType.equals("All")) {
-            // Nếu người dùng chọn "All", hiển thị tất cả các lớp
-            filteredList.addAll(yogaClasses);
-        } else {
-            for (YogaClass yogaClass : yogaClasses) {
-                if (yogaClass.getType().equals(selectedType)) {
-                    filteredList.add(yogaClass);
-                }
+        for (YogaClass yogaClass : yogaClasses) {
+            boolean matchesType = selectedType.equals("All") || yogaClass.getType().equals(selectedType);
+            boolean matchesDay = selectedDay.equals("All") || yogaClass.getDayOfWeek().equalsIgnoreCase(selectedDay);
+            boolean matchesSearch = searchQuery.isEmpty() || yogaClass.getDayOfWeek().toLowerCase().contains(searchQuery);
+
+            if (matchesType && matchesDay && matchesSearch) {
+                filteredList.add(yogaClass);
             }
         }
 
-        // Cập nhật adapter với danh sách đã lọc
         adapter.updateData(filteredList);
     }
 
-    // Load classes from SQLite
+
     private void loadClasses() {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM YogaClass", null);
@@ -193,6 +273,7 @@ public class DisplayClassesActivity extends AppCompatActivity {
                 int quantity = cursor.getInt(cursor.getColumnIndexOrThrow("quantity"));
                 int duration = cursor.getInt(cursor.getColumnIndexOrThrow("duration"));
                 String type = cursor.getString(cursor.getColumnIndexOrThrow("type"));
+                double price = cursor.getDouble(cursor.getColumnIndexOrThrow("price"));
                 String description = cursor.getString(cursor.getColumnIndexOrThrow("description"));
 
                 YogaClass yogaClass = new YogaClass(
@@ -202,6 +283,7 @@ public class DisplayClassesActivity extends AppCompatActivity {
                         quantity,
                         duration,
                         type,
+                        price,
                         description
                 );
                 yogaClasses.add(yogaClass);
@@ -209,10 +291,9 @@ public class DisplayClassesActivity extends AppCompatActivity {
         }
         cursor.close();
 
-        setupAdapter();  // Set up the adapter to show classes
+        setupAdapter();
     }
 
-    // Set up adapter for ListView
     private void setupAdapter() {
         adapter = new YogaClassAdapter(this, R.layout.list_item_yoga_class, yogaClasses, dbHelper, yogaClassesRef);
         classListView.setAdapter(adapter);

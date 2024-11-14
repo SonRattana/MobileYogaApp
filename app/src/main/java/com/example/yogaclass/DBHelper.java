@@ -8,13 +8,12 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import java.util.ArrayList;
 
 public class DBHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "YogaClass.db";
-    private static final int DATABASE_VERSION = 4;  // Increment this as necessary
+    private static final int DATABASE_VERSION = 4;
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -22,7 +21,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Tạo bảng YogaClass
         db.execSQL(
                 "CREATE TABLE YogaClass (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -35,8 +33,6 @@ public class DBHelper extends SQLiteOpenHelper {
                         "description TEXT, " +
                         "teacher TEXT)"
         );
-
-        // Tạo bảng ClassInstance
         db.execSQL(
                 "CREATE TABLE ClassInstance (" +
                         "id TEXT PRIMARY KEY, " +
@@ -44,20 +40,17 @@ public class DBHelper extends SQLiteOpenHelper {
                         "date TEXT, " +
                         "teacher TEXT, " +
                         "additionalComments TEXT, " +
-                        "price REAL, " +  // Thêm cột price với kiểu REAL
+                        "price REAL, " +
                         "FOREIGN KEY(yogaClassId) REFERENCES YogaClass(id))"
         );
-
-        // Tạo bảng UsersRole và thêm cột name
         db.execSQL(
                 "CREATE TABLE UsersRole (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        "name TEXT, " +  // Thêm cột name
+                        "name TEXT, " +
                         "email TEXT UNIQUE, " +
                         "password TEXT, " +
                         "role TEXT)"
         );
-        // Tạo bảng Users
         db.execSQL(
                 "CREATE TABLE Users (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -66,22 +59,28 @@ public class DBHelper extends SQLiteOpenHelper {
                         "password TEXT, " +
                         "role TEXT)"
         );
+        db.execSQL(
+                "CREATE TABLE Categories (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "name TEXT UNIQUE)"
+        );
 
+        // Tạo bảng Teachers để lưu trữ danh sách giáo viên
+        db.execSQL("CREATE TABLE IF NOT EXISTS Teachers (name TEXT PRIMARY KEY)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Phương thức này được gọi khi cần nâng cấp cơ sở dữ liệu
         if (oldVersion < 3) {
             Log.d("DBHelper", "Upgrading database from version " + oldVersion + " to " + newVersion);
             db.execSQL("DROP TABLE IF EXISTS ClassInstance");
             db.execSQL("DROP TABLE IF EXISTS YogaClass");
             db.execSQL("DROP TABLE IF EXISTS UsersRole");
+            db.execSQL("DROP TABLE IF EXISTS Teachers");
             onCreate(db);
         }
     }
 
-    // Chèn lớp Yoga mới vào cơ sở dữ liệu
     public long insertYogaClass(YogaClass yogaClass) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -89,13 +88,13 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("time", yogaClass.getTime());
         values.put("quantity", yogaClass.getQuantity());
         values.put("duration", yogaClass.getDuration());
+        values.put("price", yogaClass.getPrice());
         values.put("type", yogaClass.getType());
         values.put("description", yogaClass.getDescription());
 
-        return db.insert("YogaClass", null, values);  // Trả về ID của dòng hoặc -1 nếu thất bại
+        return db.insert("YogaClass", null, values);
     }
 
-    // Chèn người dùng mới vào bảng Users
     public boolean insertUserToUsers(String name, String email, String password, String role) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -104,24 +103,22 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("password", password);
         values.put("role", role);
 
-        long result = db.insert("Users", null, values);  // Chèn vào bảng Users
-        return result != -1;  // Trả về true nếu chèn thành công
+        long result = db.insert("Users", null, values);
+        return result != -1;
     }
 
-    // Chèn người dùng mới vào bảng UsersRole (đã thêm trường name)
     public boolean insertUser(String name, String email, String password, String role) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put("name", name);  // Thêm name vào ContentValues
+        values.put("name", name);
         values.put("email", email);
         values.put("password", password);
         values.put("role", role);
 
         long result = db.insert("UsersRole", null, values);
-        return result != -1;  // Trả về true nếu chèn thành công
+        return result != -1;
     }
 
-    // Kiểm tra người dùng có tồn tại dựa trên email và password
     public boolean checkUser(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM UsersRole WHERE email = ? AND password = ?", new String[]{email, password});
@@ -130,38 +127,31 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    // Lấy vai trò của người dùng dựa trên email
     public String getUserRole(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT role FROM UsersRole WHERE email = ?", new String[]{email});
         String role = null;
         if (cursor.moveToFirst()) {
-            role = cursor.getString(0);  // Lấy vai trò từ cột đầu tiên
+            role = cursor.getString(0);
         }
         cursor.close();
         return role;
     }
 
-    // Lấy tên người dùng dựa trên email
     public String getUserName(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT name FROM UsersRole WHERE email = ?", new String[]{email});
         String name = null;
         if (cursor.moveToFirst()) {
-            name = cursor.getString(0);  // Lấy tên từ cột đầu tiên
+            name = cursor.getString(0);
         }
         cursor.close();
         return name;
     }
 
-    // Chèn phiên bản lớp vào bảng ClassInstance
-
-    // Thêm buổi học mới vào SQLite và Firebase
     public long insertClassInstance(String instanceId, String yogaClassId, String date, String teacher, String comments, double price) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-
-        // Lưu ID từ Firebase vào SQLite
         values.put("id", instanceId);
         values.put("yogaClassId", yogaClassId);
         values.put("date", date);
@@ -169,16 +159,31 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("additionalComments", comments);
         values.put("price", price);
 
-        // Thêm dữ liệu vào SQLite và kiểm tra kết quả
         long result = db.insert("ClassInstance", null, values);
-
         db.close();
-        return result;  // Trả về ID của dòng hoặc -1 nếu thất bại
+        return result;
     }
-    public Cursor getClassInstancesByYogaClassId(String yogaClassId) {
-        if (yogaClassId == null || yogaClassId.isEmpty()) {
-            throw new IllegalArgumentException("Yoga Class ID cannot be null or empty");
+
+    public double getYogaClassPriceById(String yogaClassId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        double price = 0.0;
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT price FROM YogaClass WHERE id = ?", new String[]{yogaClassId});
+            if (cursor.moveToFirst()) {
+                price = cursor.getDouble(cursor.getColumnIndexOrThrow("price"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
+        return price;
+    }
+
+    public Cursor getClassInstancesByYogaClassId(String yogaClassId) {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM ClassInstance WHERE yogaClassId = ?", new String[]{yogaClassId});
     }
@@ -188,79 +193,134 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.rawQuery("SELECT * FROM ClassInstance WHERE teacher = ?", new String[]{teacherName});
     }
 
-    // Lấy tất cả các phiên bản của lớp Yoga cụ thể
     public Cursor getClassInstancesByCourse(String yogaClassId) {
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("SELECT * FROM ClassInstance WHERE yogaClassId = ?", new String[]{String.valueOf(yogaClassId)});
+        return db.rawQuery("SELECT * FROM ClassInstance WHERE yogaClassId = ?", new String[]{yogaClassId});
     }
 
-    // Trong DBHelper, phương thức này sẽ lấy đúng dayOfWeek cho từng yogaClassId
     public String getDayOfWeekByYogaClassId(String yogaClassId) {
         SQLiteDatabase db = this.getReadableDatabase();
         String dayOfWeek = null;
-
-        // Thực hiện truy vấn lấy dayOfWeek từ YogaClass dựa trên id
         Cursor cursor = db.rawQuery("SELECT dayOfWeek FROM YogaClass WHERE id = ?", new String[]{yogaClassId});
-
         if (cursor.moveToFirst()) {
-            dayOfWeek = cursor.getString(0);  // Lấy giá trị dayOfWeek từ cột đầu tiên
-            Log.d("DBHelper", "DayOfWeek for YogaClassId " + yogaClassId + ": " + dayOfWeek);
-        } else {
-            Log.e("DBHelper", "No dayOfWeek found for YogaClassId: " + yogaClassId);
+            dayOfWeek = cursor.getString(0);
         }
-
         cursor.close();
         db.close();
-
         return dayOfWeek;
     }
 
-
-
-    // Retrieve all class instances
     public Cursor getAllClassInstances() {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM ClassInstance", null);
-
     }
 
-    // Delete a class instance by ID
     public int deleteClassInstance(int instanceId) {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete("ClassInstance", "id = ?", new String[]{String.valueOf(instanceId)});
     }
-    // Hàm cập nhật instance trong SQLite
+
     public int updateClassInstance(String instanceId, String date, String teacher, String comments, double price) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-
-        // Đặt các giá trị cần cập nhật
         values.put("date", date);
         values.put("teacher", teacher);
         values.put("additionalComments", comments);
-        values.put("price", price);  // Đảm bảo kiểu dữ liệu của price là double
+        values.put("price", price);
 
-        // Cập nhật dữ liệu trong SQLite dựa trên instanceId
         int result = db.update("ClassInstance", values, "id = ?", new String[]{instanceId});
         db.close();
-
-        return result;  // Trả về số dòng bị ảnh hưởng
+        return result;
     }
 
-
-    // Lấy danh sách tất cả giáo viên từ bảng UsersRole
-    public Cursor getAllTeachers() {
+    public String getYogaClassIdByInstanceId(String instanceId) {
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("SELECT name FROM UsersRole WHERE role = ?", new String[]{"Teacher"});
+        Cursor cursor = db.rawQuery("SELECT yogaClassId FROM ClassInstance WHERE id = ?", new String[]{instanceId});
+        String yogaClassId = null;
+        if (cursor.moveToFirst()) {
+            yogaClassId = cursor.getString(0);
+        }
+        cursor.close();
+        db.close();
+        return yogaClassId;
     }
 
-
-    // Kiểm tra phiên bản lớp trùng lặp dựa trên lớp Yoga và ngày
     public boolean checkDuplicateInstance(String yogaClassId, String date) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM ClassInstance WHERE yogaClassId = ? AND date = ?", new String[]{String.valueOf(yogaClassId), date});
+        Cursor cursor = db.rawQuery("SELECT * FROM ClassInstance WHERE yogaClassId = ? AND date = ?", new String[]{yogaClassId, date});
         boolean exists = cursor.getCount() > 0;
         cursor.close();
         return exists;
+    }
+
+    public long insertCategory(String name) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("name", name);
+
+        return db.insert("Categories", null, values);
+    }
+
+    public int updateCategory(String oldName, String newName) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("name", newName);
+
+        return db.update("Categories", values, "name = ?", new String[]{oldName});
+    }
+
+    public int deleteCategory(String name) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete("Categories", "name = ?", new String[]{name});
+    }
+
+    public int deleteAllCategories() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete("Categories", null, null);
+    }
+
+    public Cursor getAllCategories() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT name FROM Categories", null);
+    }
+
+    public boolean hasClassInstances(String yogaClassId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM ClassInstance WHERE yogaClassId = ?", new String[]{yogaClassId});
+        boolean hasInstances = false;
+        if (cursor.moveToFirst()) {
+            int count = cursor.getInt(0);
+            hasInstances = count > 0;
+        }
+        cursor.close();
+        db.close();
+        return hasInstances;
+    }
+
+    // Phương thức lưu danh sách giáo viên vào SQLite
+    public void saveTeachersToSQLite(ArrayList<String> teacherList) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DELETE FROM Teachers"); // Xóa dữ liệu cũ
+        for (String teacher : teacherList) {
+            ContentValues values = new ContentValues();
+            values.put("name", teacher);
+            db.insert("Teachers", null, values);
+        }
+        db.close();
+    }
+
+    // Phương thức lấy danh sách giáo viên từ SQLite
+    public ArrayList<String> getAllTeachersFromSQLite() {
+        ArrayList<String> teacherList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT name FROM Teachers", null);
+        if (cursor.moveToFirst()) {
+            do {
+                teacherList.add(cursor.getString(cursor.getColumnIndexOrThrow("name")));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return teacherList;
     }
 }

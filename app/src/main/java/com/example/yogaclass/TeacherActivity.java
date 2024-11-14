@@ -187,6 +187,7 @@ public class TeacherActivity extends AppCompatActivity {
                     values.put("quantity", yogaClass.getQuantity());
                     values.put("duration", yogaClass.getDuration());
                     values.put("type", yogaClass.getType());
+                    values.put("price",yogaClass.getPrice());
                     values.put("description", yogaClass.getDescription());
 
                     db.insert("YogaClass", null, values);
@@ -217,6 +218,7 @@ public class TeacherActivity extends AppCompatActivity {
                 int quantity = cursor.getInt(cursor.getColumnIndexOrThrow("quantity"));
                 int duration = cursor.getInt(cursor.getColumnIndexOrThrow("duration"));
                 String type = cursor.getString(cursor.getColumnIndexOrThrow("type"));
+                double price = cursor.getDouble(cursor.getColumnIndexOrThrow("price")); // Lấy giá tiền
                 String description = cursor.getString(cursor.getColumnIndexOrThrow("description"));
 
                 String classDetails = "Day of Week: " + dayOfWeek + "\n" +
@@ -224,6 +226,7 @@ public class TeacherActivity extends AppCompatActivity {
                         "Type: " + type + "\n" +
                         "Quantity: " + quantity + "\n" +
                         "Duration: " + duration + " mins\n" +
+                        "Price: $" + String.format("%.2f", price) + "\n" + // Hiển thị giá tiền
                         "Description: " + (description != null ? description : "N/A");
 
                 classList.add(classDetails);
@@ -235,5 +238,6 @@ public class TeacherActivity extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, classList);
         lvClasses.setAdapter(adapter);
     }
+
 }
 

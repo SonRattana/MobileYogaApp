@@ -43,17 +43,17 @@ public class CustomerBookingsActivity extends AppCompatActivity {
         bookingsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                bookingsList.clear(); // Xóa danh sách cũ
+                bookingsList.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     Booking booking = snapshot.getValue(Booking.class);
-                    bookingsList.add(booking); // Thêm booking vào danh sách
+                    bookingsList.add(booking);
                 }
-                bookingAdapter.notifyDataSetChanged(); // Cập nhật adapter
+                bookingAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                // Xử lý lỗi nếu có
+
             }
         });
     }
