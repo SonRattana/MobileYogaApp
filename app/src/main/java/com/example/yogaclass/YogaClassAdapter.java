@@ -121,13 +121,12 @@ public class YogaClassAdapter extends ArrayAdapter<YogaClass> {
     private void showEditDialog(YogaClass yogaClass) {
         View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_edit_class, null);
 
-
         EditText etDescription = dialogView.findViewById(R.id.etDescription);
         Spinner spDayOfWeek = dialogView.findViewById(R.id.spDayOfWeek);
         EditText etTime = dialogView.findViewById(R.id.etTime);
         EditText etQuantity = dialogView.findViewById(R.id.etQuantity);
+        Spinner spType = dialogView.findViewById(R.id.spType);
         EditText etDuration = dialogView.findViewById(R.id.etDuration);
-        EditText etType = dialogView.findViewById(R.id.etType);
         EditText etPrice = dialogView.findViewById(R.id.etPrice);
 
 
@@ -135,29 +134,41 @@ public class YogaClassAdapter extends ArrayAdapter<YogaClass> {
         etTime.setText(yogaClass.getTime());
         etQuantity.setText(String.valueOf(yogaClass.getQuantity()));
         etDuration.setText(String.valueOf(yogaClass.getDuration()));
-        etType.setText(yogaClass.getType());
         etPrice.setText(String.valueOf(yogaClass.getPrice()));
 
 
         String[] daysOfWeek = context.getResources().getStringArray(R.array.days_of_week);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, daysOfWeek);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spDayOfWeek.setAdapter(adapter);
+        ArrayAdapter<String> dayAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, daysOfWeek);
+        dayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spDayOfWeek.setAdapter(dayAdapter);
+        int dayPosition = dayAdapter.getPosition(yogaClass.getDayOfWeek());
+        spDayOfWeek.setSelection(dayPosition);
 
 
-        int position = adapter.getPosition(yogaClass.getDayOfWeek());
-        spDayOfWeek.setSelection(position);
+        ArrayList<String> uniqueTypes = new ArrayList<>();
+        for (YogaClass yc : originalValues) {
+            if (!uniqueTypes.contains(yc.getType())) {
+                uniqueTypes.add(yc.getType());
+            }
+        }
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, uniqueTypes);
+        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spType.setAdapter(typeAdapter);
 
+
+        int typePosition = uniqueTypes.indexOf(yogaClass.getType());
+        if (typePosition >= 0) {
+            spType.setSelection(typePosition);
+        }
 
         boolean hasInstances = dbHelper.hasClassInstances(yogaClass.getId());
-
 
         if (hasInstances) {
             spDayOfWeek.setEnabled(false);
             etTime.setEnabled(false);
             etQuantity.setEnabled(false);
+            spType.setEnabled(false);
             etDuration.setEnabled(false);
-            etType.setEnabled(false);
             etPrice.setEnabled(false);
         }
 
@@ -169,15 +180,13 @@ public class YogaClassAdapter extends ArrayAdapter<YogaClass> {
                     String updatedDescription = etDescription.getText().toString();
                     yogaClass.setDescription(updatedDescription);
 
-
                     if (!hasInstances) {
                         String updatedDayOfWeek = spDayOfWeek.getSelectedItem().toString();
                         String updatedTime = etTime.getText().toString();
                         int updatedQuantity = Integer.parseInt(etQuantity.getText().toString());
                         int updatedDuration = Integer.parseInt(etDuration.getText().toString());
-                        String updatedType = etType.getText().toString();
+                        String updatedType = spType.getSelectedItem().toString();
                         double updatedPrice = Double.parseDouble(etPrice.getText().toString());
-
 
                         if (updatedPrice < 0) {
                             Toast.makeText(context, "Price cannot be negative", Toast.LENGTH_SHORT).show();
@@ -192,12 +201,13 @@ public class YogaClassAdapter extends ArrayAdapter<YogaClass> {
                         yogaClass.setPrice(updatedPrice);
                     }
 
-
                     updateClassInDatabase(yogaClass);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
     }
+
+
 
 
 
